@@ -1,0 +1,3600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnionCop™ - TOR Intelligence Platform</title>
+    <style>
+        :root {
+            --primary: #4c9ef0;     /* Neon pink */
+            --secondary: #4361ee;   /* Electric cyan */
+            --accent: #7209b7;      /* Neon yellow */
+            --warning: #f72585;     /* Orange warning */
+            --dark: #0a0d14;        /* Deep purple-black */
+            --darker: #05070d;      /* Even darker */
+            --light: #e8f3ff;       /* Soft bluish white */
+            --glass: rgba(76, 201, 240, 0.08);   /* Pink hologram glass */
+            --border: rgba(67, 97, 238, 0.25);  /* Cyan border glow */
+        }
+        :root {
+            --ultra-glass: rgba(255,255,255,0.12);
+            --ultra-border: rgba(76, 158, 240, 0.55);
+            --ultra-glow: rgba(76,158,240,0.45);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--darker);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        /* Neural Network Background Canvas */
+        #neuralCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Loading Screen with 3D Onion */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--darker);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-out;
+        }
+
+        /* === Soft Fade Background Animation for Loading Screen === */
+
+        .loading-fade-bg {
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:radial-gradient(circle at center,
+                rgba(115,80,255,0.08),
+                rgba(10,12,22,1) 70%);
+            animation: fadeWaves 6s ease-in-out infinite;
+            z-index:-1;
+        }
+
+#matrixCanvas {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    opacity:0.25;
+    mix-blend-mode:screen;
+    filter:blur(0.8px);
+}
+
+        @keyframes fadeWaves {
+            0% { opacity:0.35; filter:blur(0px); }
+            50% { opacity:0.65; filter:blur(4px); }
+            100% { opacity:0.35; filter:blur(0px); }
+        }
+
+        /* small floating dots like dashboard neural bg */
+        .loading-dots {
+            position:absolute;
+            width:3px;
+            height:3px;
+            background:rgba(115,80,255,0.55);
+            border-radius:50%;
+            animation: floatDot 6s infinite ease-in-out;
+        }
+
+        @keyframes floatDot {
+            0% { transform: translateY(0) scale(1); opacity:0.6; }
+            50% { transform: translateY(-25px) scale(1.4); opacity:1; }
+            100% { transform: translateY(0) scale(1); opacity:0.6; }
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #onionCanvas {
+            width: 500px;
+            height: 500px;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        .loading-text {
+            margin-top: 2rem;
+            font-size: 3rem;
+            font-weight: 800;
+            width: 100%;
+            text-align: center;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            text-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent);
+            animation: pulse 2.2s ease-in-out infinite;
+        }
+
+        .loading-status {
+            margin-top: 1rem;
+            width: 100%;
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--secondary);
+            opacity: 1;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 10px var(--secondary);
+        }
+
+        /* === Loading Bar + Boot Timeline (Part 2) === */
+
+        .loading-bar {
+            margin-top: 1.5rem;
+            width: 60%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .loading-bar-track {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(76, 158, 240, 0.4);
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 200% 100%;
+            animation: loadingFlow 1.2s linear infinite;
+            transition: width 0.3s ease-out;
+        }
+
+        .loading-bar-percent {
+            font-size: 1.2rem;
+            font-weight: 700;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.25em;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            margin-top: 0.5rem;
+        }
+
+        .boot-timeline {
+            margin-top: 1.2rem;
+            width: 60%;
+            max-width: 520px;
+            text-align: left;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .boot-step {
+            margin-bottom: 0.3rem;
+            color: rgba(232, 243, 255, 0.6);
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .boot-step-active {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .boot-step-complete {
+            color: var(--secondary);
+        }
+
+        @keyframes loadingFlow {
+            0% { background-position: 0 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Main Dashboard - Hidden initially */
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+
+        .dashboard-container.visible {
+            opacity: 1;
+        }
+
+        /* === ULTRA MODE BACKGROUND GRID === */
+        .ultra-grid {
+            position: fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            pointer-events:none;
+            z-index:0;
+            background-image:
+                linear-gradient(rgba(76,158,240,0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(76,158,240,0.07) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: ultraMove 18s linear infinite;
+        }
+
+        @keyframes ultraMove {
+            0% { transform: translate(0,0); }
+            100% { transform: translate(-40px, -40px); }
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(10, 14, 26, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+            letter-spacing: 0.1em;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--light);
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 25px rgba(255,255,255,0.03);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 35px rgba(0, 255, 136, 0.35);
+            transform: translateY(-3px);
+        }
+
+        /* Main Content Grid */
+        .main-content {
+            padding: 100px 2rem 2rem;
+            display: grid;
+            gap: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Section Cards */
+        .section {
+            background: var(--ultra-glass);
+            backdrop-filter: blur(26px) saturate(240%);
+            -webkit-backdrop-filter: blur(26px) saturate(240%);
+            border: 1px solid var(--ultra-border);
+            border-radius: 1rem;
+            padding: 2.4rem;
+            box-shadow: 0 0 55px var(--ultra-glow);
+            transition: all 0.4s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 0 85px var(--ultra-glow);
+            border-color: var(--secondary);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* TOR Overview Grid */
+        .tor-overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(24px) saturate(260%);
+            border: 1px solid var(--ultra-border);
+            border-radius: 0.8rem;
+            padding: 1.8rem;
+            box-shadow: 0 0 45px var(--ultra-glow);
+            transition: all 0.4s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.05);
+            border-color: var(--primary);
+            box-shadow: 0 0 75px var(--ultra-glow);
+        }
+        /* === ULTRA MODE FLOATING PARTICLES === */
+        #ultraParticles {
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            pointer-events:none;
+            z-index:0;
+        }
+        .ultra-dot {
+            position:absolute;
+            width:4px;
+            height:4px;
+            background:var(--primary);
+            border-radius:50%;
+            opacity:0.65;
+            filter:blur(1px);
+            animation: ultraFloat 6s linear infinite;
+        }
+        @keyframes ultraFloat {
+            0% { transform: translateY(0) scale(1); opacity:0.35; }
+            50% { transform: translateY(-60px) scale(1.4); opacity:1; }
+            100% { transform: translateY(0) scale(1); opacity:0.35; }
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.5rem;
+        }
+
+        /* Real-time TOR Map */
+        .tor-map-container {
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Heatmap Circle Pulse */
+        .heat-node {
+            transition: all 0.3s ease;
+        }
+
+
+        #torMapCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .map-filter-btn {
+            background: rgba(10, 14, 26, 0.8);
+            border: 1px solid var(--border);
+            color: var(--light);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .map-filter-btn.active {
+            background: var(--primary);
+            color: var(--dark);
+            border-color: var(--primary);
+        }
+
+        /* Log Upload Section */
+        .upload-zone {
+            border: 2px dashed rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 0.6rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 35px rgba(76,158,240,0.10);
+        }
+
+        .upload-zone:hover {
+            border-color: rgba(76,158,240,0.7);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 45px rgba(76,158,240,0.25);
+            transform: translateY(-4px);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+
+        .supported-formats {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+
+        /* Path Reconstruction */
+        .path-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem 0;
+            position: relative;
+        }
+
+        .path-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            animation: pathFlow 3s linear infinite;
+        }
+
+        @keyframes pathFlow {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        .path-node {
+            background: var(--dark);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .path-node:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .node-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+        }
+
+        /* AI Insights Grid */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.16);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-radius: 0.55rem;
+            padding: 1.6rem;
+            box-shadow: 0 0 32px rgba(76,158,240,0.12);
+            transition: all 0.35s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(76,158,240,0.55);
+            box-shadow: 0 0 50px rgba(76,158,240,0.32);
+        }
+
+        .insight-title {
+            color: var(--secondary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .insight-value {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 1s ease-out;
+        }
+
+        /* Threat Classification */
+        .threat-level {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.2rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .threat-low { background: rgba(0, 255, 136, 0.2); color: var(--primary); }
+        .threat-medium { background: rgba(255, 170, 0, 0.2); color: var(--warning); }
+        .threat-high { background: rgba(255, 0, 128, 0.2); color: var(--accent); }
+
+        /* Forensic Report Section */
+        .report-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 0.3rem;
+            padding: 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--dark);
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Anomaly Detector */
+        .anomaly-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .anomaly-item {
+            background: rgba(255, 0, 128, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .severity-badge {
+            background: var(--accent);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
+            animation: scanline 3s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* TOR Intelligence Layer Table Row Flash */
+        .intelFlash {
+            background: rgba(76, 201, 240, 0.12) !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+
+            /* === MOBILE OPTIMIZED LOADING SCREEN === */
+            .loading-screen {
+                padding: 1rem;
+            }
+
+            #onionCanvas {
+                width: 260px !important;
+                height: 260px !important;
+            }
+
+            .loading-text {
+                font-size: 1.8rem !important;
+                letter-spacing: 0.2em !important;
+                margin-top: 1rem !important;
+            }
+
+            .loading-status {
+                font-size: 0.9rem !important;
+                margin-top: 0.4rem !important;
+            }
+
+            .loading-bar {
+                width: 80% !important;
+                margin-top: 1rem !important;
+            }
+
+            .loading-bar-track {
+                height: 8px !important;
+            }
+
+            .loading-bar-percent {
+                font-size: 0.9rem !important;
+            }
+
+            .boot-timeline {
+                width: 90% !important;
+                font-size: 0.7rem !important;
+                line-height: 1.3 !important;
+                margin-top: 1rem !important;
+            }
+
+            .loading-dots {
+                width: 2px !important;
+                height: 2px !important;
+                animation-duration: 4s !important;
+                opacity: 0.45 !important;
+            }
+
+            #matrixCanvas {
+                opacity: 0.15 !important;
+                filter: blur(1.2px) !important;
+            }
+
+            body {
+                font-size: 14px;
+            }
+
+            .top-nav {
+                padding: 0.8rem 1rem;
+                flex-direction: column;
+                gap: 0.6rem;
+            }
+
+            .logo {
+                font-size: 1.4rem;
+            }
+
+            .nav-items {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+
+            .nav-btn {
+                padding: 0.35rem 0.8rem;
+                font-size: 0.7rem;
+            }
+
+            .main-content {
+                padding: 90px 0.8rem 1rem;
+                display: flex;
+                flex-direction: column;
+                gap: 1.3rem;
+            }
+
+            .section {
+                padding: 1.4rem !important;
+                border-radius: 0.7rem;
+                box-shadow: 0 0 25px rgba(76,158,240,0.25);
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+                text-align: center;
+            }
+
+            .stat-card {
+                padding: 1.2rem !important;
+                border-radius: 0.6rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            /* Grids collapse to single-column */
+            .tor-overview-grid,
+            .insights-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            /* Dial & summary stack vertically */
+            #origin-probability > div {
+                flex-direction: column !important;
+                align-items: center !important;
+            }
+
+            #originIntelPanel {
+                max-width: 100% !important;
+                margin-top: 1.4rem;
+            }
+
+            #originDialCanvas {
+                width: 260px !important;
+                height: 260px !important;
+            }
+
+            /* Forest of neon & particles toned down for battery */
+            .ultra-grid {
+                opacity: 0.35;
+                background-size: 28px 28px;
+            }
+
+            .ultra-dot {
+                width: 3px !important;
+                height: 3px !important;
+            }
+
+            .ultra-beam {
+                width: 100px;
+                height: 100px;
+                filter: blur(16px);
+            }
+
+            .cursor-trail {
+                display:none !important;
+            }
+
+            /* Map Responsiveness */
+            #leafletMap,
+            #fullMapContainer {
+                height: 360px !important;
+            }
+
+            /* Circuit replay canvas */
+            #circuitReplayCanvas {
+                height: 240px !important;
+            }
+
+            /* Upload zone */
+            .upload-zone {
+                padding: 2rem;
+            }
+        }
+
+.ultra-plus-reflection {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+    opacity: 0.12;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.ultra-beam {
+    position: fixed;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(76,158,240,0.45), rgba(0,0,0,0));
+    pointer-events: none;
+    mix-blend-mode: screen;
+    filter: blur(24px);
+    z-index: 5;
+    transition: transform 0.08s linear;
+}
+
+.section {
+    position: relative;
+    overflow: hidden;
+}
+
+.section::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    border:2px solid rgba(76,158,240,0.45);
+    border-radius:1rem;
+    pointer-events:none;
+    animation: neonBorder 4s ease-in-out infinite;
+}
+
+@keyframes neonBorder {
+    0% { opacity:0.35; box-shadow:0 0 15px rgba(76,158,240,0.2);}
+    50% { opacity:1; box-shadow:0 0 45px rgba(76,158,240,0.55);}
+    100% { opacity:0.35; box-shadow:0 0 15px rgba(76,158,240,0.2);}
+}
+
+.ultra-ripple {
+    position:absolute;
+    width:0px;
+    height:0px;
+    border-radius:50%;
+    border:2px solid rgba(255,0,170,0.45);
+    pointer-events:none;
+    transform: translate(-50%, -50%);
+}
+    .cursor-trail {
+        position: fixed;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(76,158,240,0.9), rgba(0,0,0,0));
+        pointer-events: none;
+        mix-blend-mode: screen;
+        filter: blur(6px);
+        opacity: 0.9;
+        transform: translate(-50%, -50%);
+        transition: transform 0.06s linear, opacity 0.35s ease-out;
+        z-index: 9999;
+    }
+</style>
+<script>
+
+(function(){
+    const trailCount = 10;
+    const trails = [];
+
+    for(let i = 0; i < trailCount; i++){
+        const dot = document.createElement("div");
+        dot.className = "cursor-trail";
+        dot.style.opacity = (0.9 - i*0.08);
+        dot.style.width = (14 - i) + "px";
+        dot.style.height = (14 - i) + "px";
+        document.body.appendChild(dot);
+        trails.push(dot);
+    }
+
+    let cursorX = 0, cursorY = 0;
+
+    document.addEventListener("mousemove", e => {
+        cursorX = e.clientX;
+        cursorY = e.clientY;
+    });
+
+    function animateTrail(){
+        let x = cursorX;
+        let y = cursorY;
+
+        trails.forEach((dot, idx) => {
+            setTimeout(() => {
+                dot.style.transform = `translate(${x}px, ${y}px)`;
+            }, idx * 16);
+        });
+
+        requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
+})();
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+</head>
+<body>
+    <!-- Neural Network Background -->
+    <canvas id="neuralCanvas"></canvas>
+    
+    <!-- Scanline Effect -->
+    <div class="scanline"></div>
+    <div id="ultraParticles"></div>
+
+    <!-- Loading Screen with 3D Hologram Onion and Boot Timeline -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-fade-bg"></div>
+        <canvas id="matrixCanvas"></canvas>
+        <div class="loading-dots" style="top:20%; left:30%; animation-delay:0s;"></div>
+        <div class="loading-dots" style="top:60%; left:50%; animation-delay:1s;"></div>
+        <div class="loading-dots" style="top:40%; left:70%; animation-delay:2s;"></div>
+        <div class="loading-dots" style="top:75%; left:20%; animation-delay:1.5s;"></div>
+        <canvas id="onionCanvas"></canvas>
+        <div class="loading-text" style="width:100%;text-align:center;">ONION<span style="color: var(--primary);">COP</span>™</div>
+        <div class="loading-status" id="loadingStatus" style="width:100%;text-align:center;">Initializing TOR Intelligence System...</div>
+
+        <!-- Loading bar with percentage -->
+        <div class="loading-bar">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
+            <div class="loading-bar-percent" id="loadingPercent" style="width:100%;text-align:center;">0%</div>
+        </div>
+
+        <!-- Boot sequence timeline -->
+        <div class="boot-timeline" id="bootTimeline"></div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container" id="dashboard">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="logo">ONION<span style="color: var(--secondary);">COP</span>™</div>
+            <div class="nav-items">
+                <button class="nav-btn" onclick="scrollToSection('overview')">Overview</button>
+                <button class="nav-btn" onclick="scrollToSection('map')">Live Map</button>
+                <button class="nav-btn" onclick="scrollToSection('upload')">Upload</button>
+                <button class="nav-btn" onclick="scrollToSection('insights')">AI Insights</button>
+                <button class="nav-btn" onclick="scrollToSection('report')">Export</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- TOR Intelligence Layer (Live Demo Data) -->
+            <section class="section" id="tor-intel">
+                <h2 class="section-title">🧠 TOR Intelligence Layer (Live Demo)</h2>
+
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelTotalNodes">–</div>
+                        <div class="stat-label">Total Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelEntryNodes">–</div>
+                        <div class="stat-label">Entry Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelMiddleNodes">–</div>
+                        <div class="stat-label">Middle Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelExitNodes">–</div>
+                        <div class="stat-label">Exit Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelAvgUptime">–</div>
+                        <div class="stat-label">Avg Uptime</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="intelTotalBandwidth">–</div>
+                        <div class="stat-label">Bandwidth</div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                    <button class="nav-btn intel-filter-btn active" data-role="all">All</button>
+                    <button class="nav-btn intel-filter-btn" data-role="entry">Entry</button>
+                    <button class="nav-btn intel-filter-btn" data-role="middle">Middle</button>
+                    <button class="nav-btn intel-filter-btn" data-role="exit">Exit</button>
+                </div>
+
+                <!-- Table -->
+                <div style="overflow-x:auto;">
+                    <table id="intelTable" style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                        <thead>
+                            <tr style="background:rgba(255,255,255,0.05);">
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">IP Address</th>
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">Country</th>
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">Role</th>
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">Uptime</th>
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">Bandwidth</th>
+                                <th style="padding:0.8rem; border-bottom:1px solid var(--border);">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="intelTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- FULL‑SCREEN REAL WORLD MAP SECTION -->
+            <section class="section" id="real-world-map">
+                <h2 class="section-title">🗺️ Global TOR Relay Map (Full View)</h2>
+
+                <p style="opacity:0.8; font-size:0.9rem; margin-bottom:1rem;">
+                    A full world map showing all TOR relays with geolocation.  
+                    Drag, zoom, and click nodes to inspect relay metadata.
+                </p>
+
+                <div id="fullMapContainer" style="
+                    width:100%;
+                    height:520px;
+                    border:1px solid var(--border);
+                    border-radius:0.5rem;
+                    background:rgba(0,0,0,0.35);
+                    position:relative;
+                    overflow:hidden;
+                ">
+                    <div id="leafletMap" style="width:100%;height:100%;"></div>
+                    <div id="fullMapInspector" style="
+                        position:absolute;
+                        bottom:1rem;
+                        right:1rem;
+                        padding:1rem;
+                        width:240px;
+                        background:rgba(0,0,0,0.75);
+                        border:1px solid var(--border);
+                        border-radius:0.4rem;
+                        display:none;
+                        font-size:0.8rem;
+                        line-height:1.4;
+                        z-index:50;
+                        pointer-events:auto;
+                    ">
+                        <div id="fullInspectorTitle" style="color:var(--primary); margin-bottom:0.5rem; font-weight:700;"></div>
+                        <div id="fullInspectorBody"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:1rem; font-size:0.8rem; opacity:0.7;">
+                    • Green = Entry Nodes │ Blue = Middle Relays │ Red = Exit Nodes  
+                    • Click a node to open metadata panel.
+                </div>
+
+            </section>
+
+            <!-- Origin Probability Heat-Dial -->
+            <section class="section" id="origin-probability">
+<h2 class="section-title">📡 Origin Probability Heat‑Dial</h2>
+
+<div style="
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:2rem;
+    width:100%;
+">
+
+    <!-- LEFT: Modern Dial -->
+    <div style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:320px;">
+        <canvas id="originDialCanvas" width="360" height="360"
+            style="
+                background:rgba(0,0,0,0.45);
+                border:1px solid var(--border);
+                border-radius:50%;
+                padding:0.5rem;
+                box-shadow:0 0 35px rgba(0,255,136,0.25);
+                width: 340px;
+                height: 340px;
+            ">
+        </canvas>
+
+        <div style="font-size:1rem; margin-top:1rem; line-height:1.8;">
+            <div><span style="color:#00ff88;">■</span> South Asia</div>
+            <div><span style="color:#00d4ff;">■</span> Europe</div>
+            <div><span style="color:#ffaa00;">■</span> Middle East</div>
+            <div><span style="color:#ff0080;">■</span> Others</div>
+        </div>
+
+        <div id="originDialInfo" style="
+            margin-top:1.2rem;
+            background:rgba(0,0,0,0.35);
+            border:1px solid var(--border);
+            padding:1rem 1.2rem;
+            border-radius:0.4rem;
+            width:100%;
+            max-width:320px;
+            font-size:0.88rem;
+            line-height:1.5;
+            text-align:left;
+        ">
+            <strong style="color:var(--secondary);">Hover Details</strong>
+            <p id="originDialHoverText" style="margin-top:0.4rem; opacity:0.85;">
+                Hover over any region of the dial to see detailed probability breakdown, routing traits, guard‑node clusters, and timing fingerprints.
+            </p>
+        </div>
+    </div>
+
+    <!-- RIGHT: Clean Minimal Intelligence Panel -->
+    <div id="originIntelPanel" style="
+        background:rgba(0,0,0,0.40);
+        border:1px solid var(--border);
+        border-radius:0.45rem;
+        padding:1.5rem;
+        font-size:1rem;
+        line-height:1.6;
+        flex:1;
+        min-width:320px;
+        max-width:420px;
+        margin-right:0;
+        backdrop-filter:blur(4px);
+    ">
+        <h3 style="color:var(--secondary); margin-bottom:1rem; font-size:1.2rem; font-weight:700;">
+            🧠 Regional Probability Summary
+        </h3>
+
+        <p style="opacity:0.85;">A simplified, high‑clarity breakdown of regional likelihood based on relay behavior, timing signatures and path entropy.</p>
+
+        <div style="margin-top:1rem;">
+            <strong style="color:#00ff88;">South Asia — 45%</strong>
+            <p style="margin:0.3rem 0 1rem 0.8rem; opacity:0.9;">
+                Most activity overlap with late‑night session pattern and Asia→EU relay routing.
+            </p>
+
+            <strong style="color:#00d4ff;">Europe — 29%</strong>
+            <p style="margin:0.3rem 0 1rem 0.8rem; opacity:0.9;">
+                High‑bandwidth guard nodes and EU exit paths suggest partial origin masking.
+            </p>
+
+            <strong style="color:#ffaa00;">Middle East — 18%</strong>
+            <p style="margin:0.3rem 0 1rem 0.8rem; opacity:0.9;">
+                Traffic jitter signature aligns with regional networks and peak‑hour burst patterns.
+            </p>
+
+            <strong style="color:#ff0080;">Others — 8%</strong>
+            <p style="margin:0.3rem 0 1rem 0.8rem; opacity:0.9;">
+                Minimal pattern overlap across timing, jitter or known path fingerprints.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- JS for Dial -->
+<script>
+(function () {
+    const canvas = document.getElementById("originDialCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const regions = [
+        { label:"South Asia", value:45, color:"#00ff88" },
+        { label:"Europe", value:29, color:"#00d4ff" },
+        { label:"Middle East", value:18, color:"#ffaa00" },
+        { label:"Others", value:8, color:"#ff0080" }
+    ];
+
+    function drawDial(highlight=-1) {
+        const total = regions.reduce((a,b)=>a+b.value,0);
+        let start = -Math.PI/2;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        regions.forEach((r,i)=>{
+            const angle = (r.value/total)*Math.PI*2;
+            const end = start + angle;
+
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, canvas.height/2);
+            ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2 - 6, start, end);
+            ctx.closePath();
+
+            ctx.fillStyle = i===highlight ? r.color + "dd" : r.color + "aa";
+            ctx.fill();
+
+            if(i===highlight){
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#fff";
+                ctx.stroke();
+            }
+
+            r._start = start;
+            r._end = end;
+            start = end;
+        });
+    }
+
+    drawDial();
+
+    canvas.addEventListener("mousemove", e=>{
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left - canvas.width/2;
+        const y = e.clientY - rect.top - canvas.height/2;
+        const dist = Math.sqrt(x*x+y*y);
+        let index = -1;
+        if(dist >= 25 && dist <= canvas.width/2){
+            let angle = Math.atan2(y,x);
+            if(angle < -Math.PI/2) angle += Math.PI*2;
+            index = regions.findIndex(r => angle>=r._start && angle<=r._end);
+        }
+        // Update info box
+        const infoBox = document.getElementById("originDialHoverText");
+        if(infoBox){
+            if(index === -1){
+                infoBox.textContent = "Hover on a slice to view routing patterns and probability traits.";
+            } else {
+                const region = regions[index];
+                infoBox.innerHTML =
+                    "<strong style='color:"+region.color+"'>" + region.label + " — " + region.value + "%</strong><br>" +
+                    "• Path Entropy Score: " + (60 + Math.floor(Math.random()*30)) + "<br>" +
+                    "• Guard-node Bias: " + (20 + Math.floor(Math.random()*50)) + "%<br>" +
+                    "• Peak Activity Window: " + ["00:00–04:00","04:00–08:00","12:00–16:00","20:00–00:00"][Math.floor(Math.random()*4)] + "<br>" +
+                    "• Relay Stability Index: " + (70 + Math.floor(Math.random()*25)) + "%";
+            }
+        }
+        drawDial(index);
+    });
+})();
+</script>
+            </section>
+
+            <!-- TOR Fingerprinting Score (New Metric) -->
+            <section class="section" id="fingerprint-score">
+                <h2 class="section-title">🧬 TOR Fingerprinting Score</h2>
+                <p style="opacity:0.8; font-size:0.9rem; margin-bottom:1rem;">
+                    Proprietary fingerprint score generated from packet bursts, jitter, flow length, and exit-node volatility.
+                </p>
+
+                <div style="
+                    display:flex;
+                    gap:2rem;
+                    align-items:center;
+                    flex-wrap:wrap;
+                ">
+                    <div style="
+                        background:rgba(0,0,0,0.35);
+                        border:1px solid var(--border);
+                        padding:2rem;
+                        border-radius:0.5rem;
+                        min-width:260px;
+                        text-align:center;
+                        box-shadow:0 0 25px rgba(0,255,136,0.15);
+                    ">
+                        <div style="font-size:3.2rem; font-weight:700; color:var(--primary);" id="fpScoreValue">–</div>
+                        <div style="margin-top:0.5rem; font-size:0.9rem; opacity:0.7;">Fingerprint Score</div>
+                    </div>
+
+                    <div style="flex:1; min-width:260px;">
+                        <div style="margin-bottom:0.8rem;">Packet Burst Consistency</div>
+                        <div class="confidence-bar"><div id="fpBurst" class="confidence-fill" style="width:0%"></div></div>
+
+                        <div style="margin:0.8rem 0;">Timing Jitter Stability</div>
+                        <div class="confidence-bar"><div id="fpJitter" class="confidence-fill" style="width:0%"></div></div>
+
+                        <div style="margin:0.8rem 0;">Flow Length Variability</div>
+                        <div class="confidence-bar"><div id="fpFlow" class="confidence-fill" style="width:0%"></div></div>
+
+                        <div style="margin:0.8rem 0;">Exit-node Volatility</div>
+                        <div class="confidence-bar"><div id="fpExit" class="confidence-fill" style="width:0%"></div></div>
+                    </div>
+                </div>
+                <script>
+                (function(){
+                    // Demo Fingerprinting Score
+                    const score = Math.floor(50 + Math.random()*45);
+                    document.getElementById("fpScoreValue").textContent = score;
+
+                    // Demo bar fills
+                    const burst = Math.floor(40 + Math.random()*60);
+                    const jitter = Math.floor(30 + Math.random()*70);
+                    const flow = Math.floor(20 + Math.random()*80);
+                    const exit = Math.floor(35 + Math.random()*65);
+
+                    document.getElementById("fpBurst").style.width = burst + "%";
+                    document.getElementById("fpJitter").style.width = jitter + "%";
+                    document.getElementById("fpFlow").style.width = flow + "%";
+                    document.getElementById("fpExit").style.width = exit + "%";
+                })();
+                </script>
+            </section>
+
+            <!-- TOR Circuit Replay Simulator -->
+            <section class="section" id="circuit-replay">
+                <h2 class="section-title">🎥 TOR Circuit Replay Simulator</h2>
+                <p style="opacity:0.8; font-size:0.9rem; margin-bottom:1rem;">
+                    Visual replay of how TOR circuits evolve over time. Shows exit‑node switches and latency color mapping.
+                </p>
+
+                <div class="circuit-replay-container" style="
+                    height:320px;
+                    background:rgba(0,0,0,0.35);
+                    border-radius:0.3rem;
+                    padding:1rem;
+                    position:relative;
+                    overflow:hidden;
+                ">
+                    <canvas id="circuitReplayCanvas" style="width:100%;height:100%;"></canvas>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:1rem; align-items:center;">
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="nav-btn" id="replayPrev">Prev</button>
+                        <button class="nav-btn" id="replayPlay">Play</button>
+                        <button class="nav-btn" id="replayNext">Next</button>
+                    </div>
+                    <div style="font-size:0.8rem; opacity:0.7;" id="replayLabel">Circuit 1 of 3</div>
+                </div>
+            </section>
+
+            <!-- User Persona Intelligence Panel -->
+            <section class="section" id="persona-intel">
+                <h2 class="section-title">🧑‍💻 User Persona Intelligence</h2>
+                <p style="opacity:0.8; font-size:0.9rem; margin-bottom:1rem;">
+                    AI‑driven tracking of repeated TOR usage patterns, behaviors, and intent classification.
+                </p>
+
+                <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+                    <div style="
+                        background:rgba(0,0,0,0.35);
+                        border:1px solid var(--border);
+                        padding:1.5rem;
+                        border-radius:0.5rem;
+                        min-width:260px;
+                        box-shadow:0 0 25px rgba(0,255,136,0.15);
+                    ">
+                        <div style="font-size:1.2rem; opacity:0.7;">Actor ID</div>
+                        <div id="personaActorID" style="font-size:1.8rem; margin-top:0.3rem; color:var(--primary); font-weight:700;">–</div>
+
+                        <div style="margin-top:1rem; font-size:0.9rem; opacity:0.7;">First Seen</div>
+                        <div id="personaFirstSeen" style="color:var(--secondary);">–</div>
+
+                        <div style="margin-top:1rem; font-size:0.9rem; opacity:0.7;">Last Seen</div>
+                        <div id="personaLastSeen" style="color:var(--secondary);">–</div>
+                    </div>
+
+                    <div style="flex:1; min-width:260px;">
+                        <div style="margin-bottom:0.8rem; font-size:0.9rem;">Behavior Window</div>
+                        <div id="personaWindow" style="margin-bottom:1rem; color:var(--primary);"></div>
+
+                        <div style="margin-bottom:0.8rem; font-size:0.9rem;">Node Preference</div>
+                        <div id="personaNodePref" style="margin-bottom:1rem; color:var(--secondary);"></div>
+
+                        <div style="margin-bottom:0.8rem; font-size:0.9rem;">Activity Frequency</div>
+                        <div id="personaFrequency" style="margin-bottom:1rem; color:var(--primary);"></div>
+
+                        <div style="margin-bottom:0.8rem; font-size:0.9rem;">Device Fingerprint Match</div>
+                        <div id="personaFingerprint" style="color:var(--secondary);"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:2rem;">
+                    <h3 style="color:var(--secondary); margin-bottom:0.8rem;">AI Intent Classification</h3>
+                    <div id="personaIntent" style="font-size:1.1rem; font-weight:700; color:var(--primary);">–</div>
+                    <p id="personaIntentReason" style="margin-top:0.5rem; opacity:0.7; font-size:0.85rem;"></p>
+                </div>
+            </section>
+
+            <!-- TOR Network Overview -->
+            <section class="section" id="overview">
+                <h2 class="section-title">⚡ TOR Network Overview</h2>
+                <div class="tor-overview-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalNodes">7,234</div>
+                        <div class="stat-label">Total Active Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="entryNodes">2,145</div>
+                        <div class="stat-label">Entry/Guard Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="exitNodes">1,089</div>
+                        <div class="stat-label">Exit Nodes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="middleNodes">4,000</div>
+                        <div class="stat-label">Middle Relays</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">98.7%</div>
+                        <div class="stat-label">Network Uptime</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">156 TB/s</div>
+                        <div class="stat-label">Total Bandwidth</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-time TOR Map -->
+            <section class="section" id="map">
+                <h2 class="section-title">🌍 Real-Time TOR Network Map</h2>
+                <div style="margin-bottom:1rem; font-size:0.9rem; opacity:0.8; line-height:1.4;">
+                    This map shows a simplified, beginner‑friendly view of how TOR routes traffic. 
+                    • Green = Entry (Guard) nodes<br>
+                    • Blue = Middle relays<br>
+                    • Red = Exit nodes<br>
+                    Lines show how a TOR circuit connects these nodes. 
+                    You can zoom, drag, and hover to learn what each node does.
+                </div>
+                <div class="tor-map-container" style="position:relative;">
+                    <div style="
+                        position:absolute;
+                        top:1rem;
+                        left:1rem;
+                        background:rgba(0,0,0,0.5);
+                        padding:0.8rem 1rem;
+                        border:1px solid var(--border);
+                        border-radius:0.3rem;
+                        font-size:0.75rem;
+                        line-height:1.4;
+                        z-index:2;
+                    ">
+                        <strong>Legend</strong><br>
+                        <span style="color:rgba(0,255,136,1)">●</span> Entry / Guard Node<br>
+                        <span style="color:rgba(99,102,241,1)">●</span> Middle Relay<br>
+                        <span style="color:rgba(255,0,128,1)">●</span> Exit Node<br>
+                        ─ Flow Line = Route in a TOR Circuit
+                    </div>
+                    <canvas id="torTrafficCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;"></canvas>
+                    <canvas id="torMapCanvas"></canvas>
+                    <div class="map-controls">
+                        <button class="map-filter-btn active" data-filter="all">All</button>
+                        <button class="map-filter-btn" data-filter="entry">Entry</button>
+                        <button class="map-filter-btn" data-filter="middle">Middle</button>
+                        <button class="map-filter-btn" data-filter="exit">Exit</button>
+                    </div>
+                    <button id="simulateCircuitBtn" class="map-filter-btn" style="margin-left:0.5rem;">Simulate Circuit</button>
+                </div>
+                <div id="nodeInspector" style="
+                 position:absolute; 
+                 bottom:1rem; 
+                 left:1rem; 
+                 padding:1rem; 
+                 background:rgba(0,0,0,0.6); 
+                 border:1px solid var(--border);
+                 backdrop-filter:blur(10px);
+                 display:none;
+                 font-size:0.8rem;
+                 width:180px;">
+                 <div id="inspectorType"></div>
+                 <div id="inspectorX"></div>
+                 <div id="inspectorY"></div>
+                </div>
+                <div id="nodeMetaPanel" style="
+                 position:absolute;
+                 bottom:1rem;
+                 right:1rem;
+                 padding:1rem;
+                 width:220px;
+                 background:rgba(0,0,0,0.65);
+                 border:1px solid var(--border);
+                 border-radius:0.3rem;
+                 display:none;
+                 font-size:0.75rem;
+                 line-height:1.3;
+                 z-index:3;">
+                 <div id="metaTitle" style="color:var(--primary); margin-bottom:0.5rem; font-weight:700;"></div>
+                 <div id="metaBody"></div>
+                </div>
+            </section>
+
+
+            <!-- Log Upload Section -->
+            <section class="section" id="upload">
+                <h2 class="section-title">📤 Traffic Analysis Upload</h2>
+                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drop files here or click to upload</div>
+                    <div class="supported-formats">Supported: PCAP, CSV, JSON, Firewall Logs</div>
+                    <input type="file" id="fileInput" style="display: none" multiple accept=".pcap,.csv,.json,.log">
+                </div>
+            </section>
+
+            <!-- Path Reconstruction -->
+            <section class="section" id="reconstruction">
+                <h2 class="section-title">🔗 Path Reconstruction</h2>
+                <div class="path-timeline">
+                    <div class="path-node">
+                        <div class="node-icon">🔐</div>
+                        <div class="node-label">Origin</div>
+                    </div>
+                    <div class="path-node">
+                        <div class="node-icon">🌐</div>
+                        <div class="node-label">Entry</div>
+                    </div>
+                    <div class="path-node">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-label">Middle</div>
+                    </div>
+                    <div class="path-node">
+                        <div class="node-icon">🚪</div>
+                        <div class="node-label">Exit</div>
+                    </div>
+                    <div class="path-node">
+                        <div class="node-icon">🎯</div>
+                        <div class="node-label">Target</div>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem;">
+                    <div class="insight-title">Confidence Score</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 87%"></div>
+                    </div>
+                    <div style="text-align: right; margin-top: 0.5rem; color: var(--primary);">87% Confidence</div>
+                </div>
+            </section>
+
+            <!-- AI Insights -->
+            <section class="section" id="insights">
+                <h2 class="section-title">🤖 AI-Powered Insights</h2>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <div class="insight-title">🧬 Traffic DNA Fingerprint</div>
+                        <div class="insight-value" id="trafficDNAValue">Pattern #A41 Detected</div>
+                        <p id="trafficDNADetails" style="opacity: 0.7; font-size: 0.85rem;">Matches 3 previous TOR sessions. Probable recurring actor.</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 92%"></div>
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-title">🌍 Geo-Temporal Analysis</div>
+                        <div class="insight-value" id="geoOriginValue">UTC+5:30 Origin</div>
+                        <p id="geoOriginDetails" style="opacity: 0.7; font-size: 0.85rem;">Predicted Region: South Asia<br>Confidence: High</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 78%"></div>
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-title">⚠️ Threat Classification</div>
+                        <div class="insight-value">
+                            <span class="threat-level threat-high" id="threatLevelValue">HIGH RISK</span>
+                        </div>
+                        <p style="opacity: 0.7; font-size: 0.85rem;">Detected Intent: Potential Darknet Marketplace Communication</p>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-title">🎯 Entry Node Estimation</div>
+                        <div class="insight-value" id="entryNodeValue">185.220.101.23</div>
+                        <p id="entryNodeDetails" style="opacity: 0.7; font-size: 0.85rem;">Guard Node: Germany<br>Uptime: 99.2%</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 84%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hidden Service Scanner -->
+            <section class="section" id="hs-scanner">
+                <h2 class="section-title">🕳 Hidden Service Scanner</h2>
+                <p style="opacity:0.8; margin-bottom:1rem;">Paste any .onion address to detect metadata leaks, fingerprint matches, and threat indicators.</p>
+
+                <input id="hsInput" 
+                       type="text" 
+                       placeholder="Enter .onion URL (e.g., abcd1234xyz.onion)" 
+                       style="width:100%; padding:1rem; background:rgba(0,0,0,0.4); border:1px solid var(--border); color:var(--light); border-radius:0.3rem; font-family:inherit;">
+
+                <button class="nav-btn" style="margin-top:1rem;" onclick="scanHiddenService()">Scan Hidden Service</button>
+
+                <div id="hsResults" style="margin-top:1.5rem; display:none;">
+                    <h3 style="color:var(--secondary); margin-bottom:0.8rem;">Scan Results</h3>
+                    <div id="hsFingerprint" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsServer" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsMatch" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsThreat" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsKnownService" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsPreview" style="margin-top:1rem; margin-bottom:0.5rem;"></div>
+                    <div id="hsMetaHeader" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsMetaOnion" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsMetaClock" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsMetaFavicon" style="margin-bottom:0.5rem;"></div>
+                    <div id="hsMetaKeywords" style="margin-bottom:0.5rem;"></div>
+                </div>
+            </section>
+
+            <!-- Darknet Content Profiler -->
+            <section class="section" id="darknet-profiler">
+                <h2 class="section-title">🕸 Darknet Content Profiler</h2>
+                <p style="opacity:0.8; margin-bottom:1rem;">
+                    Automatically profiles a .onion service and predicts its category, intent, danger score, and behavioral traits.
+                </p>
+
+                <input id="profilerInput"
+                       type="text"
+                       placeholder="Enter .onion URL for profiling..."
+                       style="width:100%; padding:1rem; background:rgba(0,0,0,0.4); 
+                              border:1px solid var(--border); color:var(--light);
+                              border-radius:0.3rem; font-family:inherit;">
+
+                <button class="nav-btn" style="margin-top:1rem;" onclick="runContentProfiler()">Profile Service</button>
+
+                <div id="profilerResults" style="margin-top:1.5rem; display:none;">
+                    <h3 style="color:var(--secondary); margin-bottom:0.8rem;">Profiler Output</h3>
+
+                    <div id="profCategory" style="margin-bottom:0.5rem;"></div>
+                    <div id="profIntent" style="margin-bottom:0.5rem;"></div>
+                    <div id="profDanger" style="margin-bottom:0.5rem;"></div>
+                    <div id="profKeywords" style="margin-bottom:0.5rem;"></div>
+                    <div id="profSimilarity" style="margin-bottom:0.5rem;"></div>
+                </div>
+            </section>
+
+            <!-- Anomaly Detection -->
+            <section class="section">
+                <h2 class="section-title">🚨 TOR Anomaly Detector</h2>
+                <div class="anomaly-list" id="anomalyList">
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>Malicious Exit Node Detected</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">IP: 142.93.45.201 | Country: Netherlands</div>
+                        </div>
+                        <span class="severity-badge">CRITICAL</span>
+                    </div>
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>Suspicious Latency Pattern</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">Node: 78.47.18.110 | Avg RTT: 850ms</div>
+                        </div>
+                        <span class="severity-badge">HIGH</span>
+                    </div>
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>Newly Flagged Relay</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">Node: 195.154.146.23 | Age: 2 days</div>
+                        </div>
+                        <span class="severity-badge">MEDIUM</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Forensic Report Export -->
+            <section class="section" id="report">
+                <h2 class="section-title">📄 Forensic Report Generator</h2>
+                <div class="report-preview">
+=== ONIONCOP™ FORENSIC ANALYSIS REPORT ===
+Generated: 2025-11-20 14:32:18 UTC
+Case ID: TOR-2025-1120-A41
+
+[NETWORK ANALYSIS]
+→ Total Nodes Analyzed: 7,234
+→ Reconstructed Hops: 5
+→ Origin Confidence: 87%
+
+[PATH RECONSTRUCTION]
+Entry Node: 185.220.101.23 (Germany)
+Middle Node: 45.142.214.123 (France)
+Exit Node: 178.175.131.194 (Russia)
+
+[AI INSIGHTS]
+→ Traffic DNA: Pattern #A41
+→ Threat Level: HIGH
+→ Predicted Intent: Darknet Marketplace
+→ Geo-Origin: UTC+5:30 (South Asia)
+
+[ANOMALIES DETECTED]
+→ 3 malicious exit nodes identified
+→ 1 suspicious latency pattern
+→ TOR Threat Index: 7.8/10
+
+[RECOMMENDATION]
+Immediate investigation recommended.
+Cross-reference with known threat actors.
+                </div>
+                <button class="export-btn" onclick="generateReport()">⬇ EXPORT FULL REPORT (PDF)</button>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet-curve"></script>
+    <script>
+        // Enable ULTRA MODE
+        document.body.classList.add("ultra-mode");
+
+        // Inject background grid
+        const grid = document.createElement("div");
+        grid.className = "ultra-grid";
+        document.body.appendChild(grid);
+
+        // Generate floating particles
+        const particleLayer = document.getElementById("ultraParticles");
+        for(let i=0; i<80; i++){
+            const p = document.createElement("div");
+            p.className = "ultra-dot";
+            p.style.left = Math.random()*100 + "%";
+            p.style.top = Math.random()*100 + "%";
+            p.style.animationDelay = (Math.random()*5)+"s";
+            particleLayer.appendChild(p);
+        }
+    </script>
+    <script>
+    /* ==== ENABLE ULTRA MODE++ ==== */
+    // Cursor hologram beam
+    const beam = document.createElement("div");
+    beam.className = "ultra-beam";
+    document.body.appendChild(beam);
+
+    document.addEventListener("mousemove", e => {
+        beam.style.transform = `translate(${e.clientX - 80}px, ${e.clientY - 80}px)`;
+    });
+
+    // Click ripple effect on all sections
+    document.querySelectorAll(".section").forEach(sec => {
+        sec.addEventListener("click", e => {
+            const rip = document.createElement("div");
+            rip.className = "ultra-ripple";
+            sec.appendChild(rip);
+            rip.style.left = e.offsetX + "px";
+            rip.style.top = e.offsetY + "px";
+
+            setTimeout(() => {
+                rip.style.width = "260px";
+                rip.style.height = "260px";
+                rip.style.opacity = "0";
+            }, 10);
+
+            setTimeout(() => rip.remove(), 600);
+        });
+
+        // Add reflection overlay
+        const refl = document.createElement("div");
+        refl.className = "ultra-plus-reflection";
+        sec.appendChild(refl);
+    });
+    </script>
+    <script>
+        /* ==== CYBER MATRIX RAIN BACKGROUND (Loading Screen) ==== */
+        const matrixCanvas = document.getElementById("matrixCanvas");
+        const mtx = matrixCanvas.getContext("2d");
+
+        function resizeMatrix() {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+        }
+        resizeMatrix();
+        window.addEventListener("resize", resizeMatrix);
+
+        const chars = "01<>={}[]/*\\+-~#@%$&".split("");
+        let drops = [];
+
+        function initMatrix() {
+            drops = [];
+            const columns = Math.floor(matrixCanvas.width / 14);
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * matrixCanvas.height;
+            }
+        }
+        initMatrix();
+
+        function drawMatrix() {
+            mtx.fillStyle = "rgba(0,0,0,0.08)";
+            mtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+
+            mtx.fillStyle = "rgba(76,158,240,0.7)";
+            mtx.font = "14px Courier New";
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                mtx.fillText(char, i * 14, drops[i] * 1.4);
+
+                if (drops[i] * 1.4 > matrixCanvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        /* ==== DARKNET CONTENT PROFILER ==== */
+        function runContentProfiler() {
+            const url = document.getElementById('profilerInput').value.trim();
+            const results = document.getElementById('profilerResults');
+
+            if (!url.endsWith(".onion")) {
+                alert("Invalid onion address. Must end with .onion");
+                return;
+            }
+
+            results.style.display = "block";
+
+            const categories = ["Marketplace", "Hosting Service", "Scam Portal", "Ransom Panel", "Messaging Hub", "Information Wiki"];
+            const intents = ["Transactional", "Anonymity Seeking", "Malicious", "Negotiation", "Information Sharing", "Neutral/Browsing"];
+            const dangers = ["Low", "Medium", "High", "Critical"];
+            const keywordSets = [
+                "Keywords: buy, vendor, cart, escrow",
+                "Keywords: host, upload, file, mirror",
+                "Keywords: login, panel, key, decrypt",
+                "Keywords: ransom, payment, decryptor",
+                "Keywords: chat, msg, secure, channel",
+                "Keywords: info, article, index"
+            ];
+            const similarities = [
+                "Similarity: 82% match with known marketplaces",
+                "Similarity: 64% match with scam archives",
+                "Similarity: 45% match with ransomware portals",
+                "Similarity: 73% match with fraud databases",
+                "Similarity: 28% match with general info pages"
+            ];
+
+            const c = categories[Math.floor(Math.random()*categories.length)];
+            const i = intents[Math.floor(Math.random()*intents.length)];
+            const d = dangers[Math.floor(Math.random()*dangers.length)];
+            const k = keywordSets[Math.floor(Math.random()*keywordSets.length)];
+            const s = similarities[Math.floor(Math.random()*similarities.length)];
+
+            document.getElementById("profCategory").innerHTML = "<strong>Category:</strong> " + c;
+            document.getElementById("profIntent").innerHTML = "<strong>Likely Intent:</strong> " + i;
+            document.getElementById("profDanger").innerHTML = "<strong>Danger Rating:</strong> " + d;
+            document.getElementById("profKeywords").innerHTML = "<strong>Keyword Signals:</strong> " + k;
+            document.getElementById("profSimilarity").innerHTML = "<strong>Profile Similarity:</strong> " + s;
+        }
+        /* ==== TOR CIRCUIT REPLAY ENGINE ==== */
+        const replayCanvas = document.getElementById('circuitReplayCanvas');
+        const replayCtx = replayCanvas ? replayCanvas.getContext('2d') : null;
+
+        function resizeReplay() {
+            if (!replayCanvas) return;
+            const box = replayCanvas.parentElement;
+            replayCanvas.width = box.clientWidth;
+            replayCanvas.height = box.clientHeight;
+        }
+        resizeReplay();
+        window.addEventListener('resize', resizeReplay);
+
+        const replayCircuits = [
+            {
+                name:"Circuit 1",
+                edges:[
+                    {from:{x:0.1,y:0.5}, to:{x:0.35,y:0.3}, latency:90},
+                    {from:{x:0.35,y:0.3}, to:{x:0.6,y:0.65}, latency:130},
+                    {from:{x:0.6,y:0.65}, to:{x:0.85,y:0.4}, latency:210}
+                ]
+            },
+            {
+                name:"Circuit 2",
+                edges:[
+                    {from:{x:0.1,y:0.5}, to:{x:0.32,y:0.32}, latency:110},
+                    {from:{x:0.32,y:0.32}, to:{x:0.6,y:0.55}, latency:260},
+                    {from:{x:0.6,y:0.55}, to:{x:0.85,y:0.37}, latency:340}
+                ]
+            },
+            {
+                name:"Circuit 3",
+                edges:[
+                    {from:{x:0.1,y:0.5}, to:{x:0.34,y:0.25}, latency:140},
+                    {from:{x:0.34,y:0.25}, to:{x:0.58,y:0.6}, latency:310},
+                    {from:{x:0.58,y:0.6}, to:{x:0.85,y:0.42}, latency:420}
+                ]
+            }
+        ];
+
+        let replayIndex = 0;
+        let replayT = 0;
+        let replayPlaying = false;
+        const replayLabel = document.getElementById('replayLabel');
+
+        function latencyColor(lat) {
+            if (lat < 120) return "rgba(0,255,136,0.9)";
+            if (lat < 300) return "rgba(255,200,0,0.9)";
+            return "rgba(255,0,128,0.9)";
+        }
+
+        function drawReplay() {
+            if (!replayCtx) return;
+            const w = replayCanvas.width;
+            const h = replayCanvas.height;
+
+            replayCtx.clearRect(0,0,w,h);
+
+            const circ = replayCircuits[replayIndex];
+
+            circ.edges.forEach((e,i) => {
+                const x1 = e.from.x * w;
+                const y1 = e.from.y * h;
+                const x2 = e.to.x * w;
+                const y2 = e.to.y * h;
+
+                const pulse = 0.4 + 0.3 * Math.sin((replayT/600) + i);
+
+                replayCtx.beginPath();
+                replayCtx.moveTo(x1,y1);
+                replayCtx.lineTo(x2,y2);
+                replayCtx.strokeStyle = latencyColor(e.latency).replace("0.9", pulse.toFixed(2));
+                replayCtx.lineWidth = 3;
+                replayCtx.stroke();
+
+                replayCtx.fillStyle = "white";
+                replayCtx.font = "12px Courier New";
+                replayCtx.fillText(e.latency+"ms", (x1+x2)/2 + 5, (y1+y2)/2 - 5);
+            });
+
+            replayLabel.textContent = `${circ.name} (${replayIndex+1} of ${replayCircuits.length})`;
+            replayT += 16;
+            requestAnimationFrame(drawReplay);
+        }
+        drawReplay();
+
+        document.getElementById("replayPrev").onclick = () => {
+            replayIndex = (replayIndex - 1 + replayCircuits.length) % replayCircuits.length;
+        };
+        document.getElementById("replayNext").onclick = () => {
+            replayIndex = (replayIndex + 1) % replayCircuits.length;
+        };
+        document.getElementById("replayPlay").onclick = () => {
+            replayPlaying = !replayPlaying;
+            document.getElementById("replayPlay").textContent = replayPlaying ? "Pause" : "Play";
+        };
+
+        setInterval(() => {
+            if (replayPlaying) {
+                replayIndex = (replayIndex + 1) % replayCircuits.length;
+            }
+        }, 3000);
+
+        function scanHiddenService() {
+            const url = document.getElementById('hsInput').value.trim();
+            const results = document.getElementById('hsResults');
+            const fp = document.getElementById('hsFingerprint');
+            const server = document.getElementById('hsServer');
+            const match = document.getElementById('hsMatch');
+            const threat = document.getElementById('hsThreat');
+            const known = document.getElementById('hsKnownService');
+            const preview = document.getElementById('hsPreview');
+            const metaHeader = document.getElementById('hsMetaHeader');
+            const metaOnion = document.getElementById('hsMetaOnion');
+            const metaClock = document.getElementById('hsMetaClock');
+            const metaFavicon = document.getElementById('hsMetaFavicon');
+            const metaKeywords = document.getElementById('hsMetaKeywords');
+
+            if (!url.endsWith(".onion")) {
+                alert("Invalid onion address. Must end with .onion");
+                return;
+            }
+
+            results.style.display = "block";
+
+            const fingerprints = ["DarkWebMarket", "RansomOps v3", "FraudShopX", "Unknown", "CryptoMixer", "BotnetHub"];
+            const servers = ["Tor HiddenService v2", "Tor HiddenService v3", "Custom Onion Server", "Unknown"];
+            const threats = ["Low", "Medium", "High", "Critical"];
+            const knownServices = ["Hydra Market", "Incognito Market", "Alphabay Clone", "Ransomware Negotiation Portal", "FraudStore", "No known criminal linkage"];
+            const previews = [
+                {title:"Login Portal", size:"14.2 KB", desc:"Simple auth page with 1 form"},
+                {title:"Marketplace Home", size:"48.9 KB", desc:"Multiple product listings detected"},
+                {title:"Encrypted Gateway", size:"8.3 KB", desc:"Minimal page with strong headers"},
+                {title:"Ransom Negotiation Panel", size:"22.0 KB", desc:"Command panel keywords present"},
+                {title:"Static Info Page", size:"3.1 KB", desc:"No interactive elements"}
+            ];
+            const headerLeaks = [
+                "Server: nginx/1.14.2",
+                "Server: Apache/2.4.41",
+                "Server: Tor HiddenService",
+                "Server: Unknown",
+                "Header Leak: X-Powered-By: PHP/7.4",
+                "Header Leak: Unmasked timezone header"
+            ];
+
+            const onionVersions = [
+                "HSv3 (Modern, Secure)",
+                "HSv2 (Deprecated, Vulnerable)",
+                "Custom HS Server",
+                "Unknown"
+            ];
+
+            const clockSkew = [
+                "0–2 seconds (Safe)",
+                "5–12 seconds (Minor mismatch)",
+                "25–60 seconds (Potential deanonymization risk)",
+                "120+ seconds (Severe leak)"
+            ];
+
+            const faviconHashes = [
+                "Matches Darknet Market Icon",
+                "Matches Ransomware Panel Icon",
+                "Unknown Icon Hash",
+                "Matches Fraud Store Icon",
+                "No favicon detected"
+            ];
+
+            const keywordFlags = [
+                "Keywords detected: login, panel, auth",
+                "Keywords detected: buy, vendor, market",
+                "Keywords detected: decrypt, payment",
+                "No sensitive keywords detected",
+                "Encrypted static page (no keywords)"
+            ];
+
+            const fpVal = fingerprints[Math.floor(Math.random()*fingerprints.length)];
+            const srvVal = servers[Math.floor(Math.random()*servers.length)];
+            const threatVal = threats[Math.floor(Math.random()*threats.length)];
+            const matchVal = Math.floor(Math.random()*100);
+            const knownVal = knownServices[Math.floor(Math.random()*knownServices.length)];
+            const prev = previews[Math.floor(Math.random()*previews.length)];
+            const hLeak = headerLeaks[Math.floor(Math.random()*headerLeaks.length)];
+            const oVer = onionVersions[Math.floor(Math.random()*onionVersions.length)];
+            const cSkew = clockSkew[Math.floor(Math.random()*clockSkew.length)];
+            const fHash = faviconHashes[Math.floor(Math.random()*faviconHashes.length)];
+            const kFlags = keywordFlags[Math.floor(Math.random()*keywordFlags.length)];
+
+            fp.innerHTML = "<strong>Fingerprint:</strong> " + fpVal;
+            server.innerHTML = "<strong>Server Type:</strong> " + srvVal;
+            match.innerHTML = "<strong>Match Confidence:</strong> " + matchVal + "%";
+            threat.innerHTML = "<strong>Threat Level:</strong> " + threatVal;
+            known.innerHTML = "<strong>Known Criminal Service Match:</strong> " + knownVal;
+            preview.innerHTML = "<strong>Page Title:</strong> "+ prev.title +
+                                "<br><strong>Page Size:</strong> "+ prev.size +
+                                "<br><strong>Description:</strong> "+ prev.desc;
+            metaHeader.innerHTML = "<strong>Header Fingerprint:</strong> " + hLeak;
+            metaOnion.innerHTML = "<strong>Onion Version:</strong> " + oVer;
+            metaClock.innerHTML = "<strong>Clock Skew:</strong> " + cSkew;
+            metaFavicon.innerHTML = "<strong>Favicon Hash Match:</strong> " + fHash;
+            metaKeywords.innerHTML = "<strong>Keyword Analysis:</strong> " + kFlags;
+        }
+        // ===== NEURAL NETWORK BACKGROUND =====
+        const neuralCanvas = document.getElementById('neuralCanvas');
+        const neuralCtx = neuralCanvas.getContext('2d');
+        neuralCanvas.width = window.innerWidth;
+        neuralCanvas.height = window.innerHeight;
+
+        class NeuralNode {
+            constructor() {
+                this.x = Math.random() * neuralCanvas.width;
+                this.y = Math.random() * neuralCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > neuralCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > neuralCanvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                neuralCtx.beginPath();
+                neuralCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                neuralCtx.fillStyle = 'rgba(0, 255, 136, 0.6)';
+                neuralCtx.fill();
+            }
+        }
+
+        const nodes = Array.from({ length: 100 }, () => new NeuralNode());
+
+        function animateNeural() {
+            neuralCtx.fillStyle = 'rgba(5, 8, 16, 0.1)';
+            neuralCtx.fillRect(0, 0, neuralCanvas.width, neuralCanvas.height);
+
+            nodes.forEach((node, i) => {
+                node.update();
+                node.draw();
+
+                nodes.slice(i + 1).forEach(other => {
+                    const dx = node.x - other.x;
+                    const dy = node.y - other.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 150) {
+                        neuralCtx.beginPath();
+                        neuralCtx.moveTo(node.x, node.y);
+                        neuralCtx.lineTo(other.x, other.y);
+                        neuralCtx.strokeStyle = `rgba(0, 212, 255, ${0.3 * (1 - dist / 150)})`;
+                        neuralCtx.lineWidth = 0.5;
+                        neuralCtx.stroke();
+                    }
+                });
+            });
+
+            requestAnimationFrame(animateNeural);
+        }
+
+        animateNeural();
+
+        window.addEventListener('resize', () => {
+            neuralCanvas.width = window.innerWidth;
+            neuralCanvas.height = window.innerHeight;
+        });
+
+        /* ==== LIVE TOR TRAFFIC OVERLAY (Flow Lines + Pulses) ==== */
+        const trafficCanvas = document.getElementById("torTrafficCanvas");
+        const trafficCtx = trafficCanvas.getContext("2d");
+
+        function resizeTraffic() {
+            const box = trafficCanvas.parentElement;
+            trafficCanvas.width = box.clientWidth;
+            trafficCanvas.height = box.clientHeight;
+        }
+        resizeTraffic();
+        window.addEventListener("resize", resizeTraffic);
+
+        // Demo TOR flow points (auto‑moving)
+        let trafficFlows = Array.from({ length: 10 }, () => ({
+            x1: Math.random(),
+            y1: Math.random(),
+            x2: Math.random(),
+            y2: Math.random(),
+            t: 0
+        }));
+
+        function drawTraffic() {
+            const w = trafficCanvas.width;
+            const h = trafficCanvas.height;
+
+            trafficCtx.clearRect(0, 0, w, h);
+
+            trafficFlows.forEach(flow => {
+                flow.t += 0.01;
+                if (flow.t > 1) {
+                    flow.t = 0;
+                    flow.x1 = Math.random();
+                    flow.y1 = Math.random();
+                    flow.x2 = Math.random();
+                    flow.y2 = Math.random();
+                }
+
+                const xA = flow.x1 * w;
+                const yA = flow.y1 * h;
+                const xB = flow.x2 * w;
+                const yB = flow.y2 * h;
+
+                trafficCtx.beginPath();
+                trafficCtx.moveTo(xA, yA);
+                trafficCtx.lineTo(xB, yB);
+                trafficCtx.strokeStyle = "rgba(76,158,240,0.35)";
+                trafficCtx.lineWidth = 2;
+                trafficCtx.stroke();
+
+                const px = xA + (xB - xA) * flow.t;
+                const py = yA + (yB - yA) * flow.t;
+
+                trafficCtx.beginPath();
+                trafficCtx.arc(px, py, 6, 0, Math.PI * 2);
+                trafficCtx.fillStyle = "rgba(255,0,170,0.8)";
+                trafficCtx.fill();
+            });
+
+            requestAnimationFrame(drawTraffic);
+        }
+        drawTraffic();
+
+        /* ==== FULL WORLD MAP RENDERER (Leaflet) ==== */
+        const leafletMapEl = document.getElementById("leafletMap");
+        let leafletMap;
+
+        if (leafletMapEl && window.L) {
+            leafletMap = L.map("leafletMap", {
+                worldCopyJump: true,
+                zoomControl: true,
+                minZoom: 2,
+                maxZoom: 5,
+                maxBounds: [[85, -180], [-85, 180]],
+            }).setView([20, 0], 2);
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "",
+                maxZoom: 5,
+                minZoom: 2
+            }).addTo(leafletMap);
+
+            // === MarkerCluster group ===
+            const clusterGroup = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                maxClusterRadius: 45,
+                spiderfyOnMaxZoom: true,
+                disableClusteringAtZoom: 6
+            });
+            leafletMap.addLayer(clusterGroup);
+
+            // DEMO NODES
+            const staticNodes = [
+                { lat: 52.37, lon: 4.90, role: "exit", label: "Exit – Amsterdam" },
+                { lat: 50.11, lon: 8.68, role: "entry", label: "Entry – Frankfurt" },
+                { lat: 48.85, lon: 2.35, role: "middle", label: "Middle – Paris" },
+                { lat: 40.71, lon: -74.00, role: "exit", label: "Exit – New York" },
+                { lat: 13.08, lon: 80.27, role: "entry", label: "Entry – Chennai" },
+
+                /* Added new nodes */
+                { lat: 35.68, lon: 139.69, role: "middle", label: "Middle – Tokyo" },
+                { lat: 55.75, lon: 37.61, role: "exit", label: "Exit – Moscow" },
+                { lat: -33.86, lon: 151.20, role: "entry", label: "Entry – Sydney" },
+                { lat: 37.77, lon: -122.41, role: "middle", label: "Middle – San Francisco" },
+                { lat: 41.90, lon: 12.49, role: "exit", label: "Exit – Rome" },
+                { lat: 31.23, lon: 121.47, role: "middle", label: "Middle – Shanghai" },
+                { lat: 19.43, lon: -99.13, role: "entry", label: "Entry – Mexico City" },
+                { lat: 1.35, lon: 103.82, role: "exit", label: "Exit – Singapore" },
+                { lat: -23.55, lon: -46.63, role: "middle", label: "Middle – Sao Paulo" },
+                { lat: 59.93, lon: 30.33, role: "entry", label: "Entry – Saint Petersburg" }
+            ];
+
+            // Also pull live nodes from TOR INTELLIGENCE TABLE
+            const intelTableData = [...document.querySelectorAll("#intelTableBody tr")].map(row => {
+                const c = row.querySelectorAll("td");
+                return {
+                    lat: 20 + Math.random() * 40 - 20,
+                    lon: Math.random() * 360 - 180,
+                    role: (c[2]?.innerText || "").toLowerCase(),
+                    label: c[0]?.innerText || "Relay"
+                };
+            });
+
+            const fullInspector = document.getElementById("fullMapInspector");
+            const fullInspectorTitle = document.getElementById("fullInspectorTitle");
+            const fullInspectorBody = document.getElementById("fullInspectorBody");
+
+            function addMarker(node) {
+                const color =
+                    node.role === "entry" ? "#00ff88" :
+                    node.role === "middle" ? "#4361ee" :
+                    node.role === "exit" ? "#f72585" :
+                    "#ffffff";
+
+                const marker = L.circleMarker([node.lat, node.lon], {
+                    radius: 6,
+                    color,
+                    fillColor: color,
+                    fillOpacity: 0.9,
+                    weight: 1
+                });
+                clusterGroup.addLayer(marker);
+
+                marker.on("click", () => {
+                    fullInspector.style.display = "block";
+                    fullInspectorTitle.textContent = node.label;
+                    fullInspectorBody.innerHTML = `
+                        <strong>Role:</strong> ${node.role.toUpperCase()}<br>
+                        <strong>Location:</strong> ${node.lat.toFixed(2)}, ${node.lon.toFixed(2)}<br>
+                        <strong>Source:</strong> TOR Intelligence Layer<br>
+                    `;
+                });
+            }
+
+            staticNodes.forEach(addMarker);
+            intelTableData.forEach(addMarker);
+
+            // ==== TOR Curved Circuit Paths ====
+            const torCircuits = [
+                { from: staticNodes[0], to: staticNodes[1] },
+                { from: staticNodes[1], to: staticNodes[2] },
+                { from: staticNodes[2], to: staticNodes[3] }
+            ];
+
+            function drawCurve(from, to) {
+                const controlLat = (from.lat + to.lat) / 2 + 15;
+                const controlLon = (from.lon + to.lon) / 2;
+
+                const path = L.curve(
+                    [
+                        'M', [from.lat, from.lon],
+                        'Q', [controlLat, controlLon],
+                        [to.lat, to.lon]
+                    ],
+                    {
+                        color: '#4c9ef0',
+                        weight: 3,
+                        opacity: 0.8
+                    }
+                );
+                path.addTo(leafletMap);
+            }
+
+
+            torCircuits.forEach(c => drawCurve(c.from, c.to));
+
+            /* ==== MAP V2 ANIMATIONS (A+B+C) ==== */
+
+            /* A — Pulsing Node Beacons */
+            function pulseMarker(lat, lon, color) {
+                const pulse = L.circle([lat, lon], {
+                    radius: 90,
+                    color: color,
+                    weight: 1,
+                    opacity: 0.4,
+                    fillOpacity: 0.05
+                }).addTo(leafletMap);
+
+                let grow = true;
+                setInterval(() => {
+                    let r = pulse.getRadius();
+                    if (grow) {
+                        pulse.setRadius(r + 15);
+                        if (r > 220) grow = false;
+                    } else {
+                        pulse.setRadius(r - 15);
+                        if (r < 90) grow = true;
+                    }
+                }, 80);
+            }
+
+            /* Apply pulse to static nodes */
+            staticNodes.forEach(n => {
+                const c =
+                    n.role === "entry" ? "#00ff88" :
+                    n.role === "middle" ? "#4361ee" :
+                    "#f72585";
+                pulseMarker(n.lat, n.lon, c);
+            });
+
+            /* B — Animated Particle Flow on Curved TOR Paths */
+            function animateCurve(from, to) {
+                const particle = L.circleMarker([from.lat, from.lon], {
+                    radius: 4,
+                    color: "#ffffff",
+                    fillColor: "#ffffff",
+                    fillOpacity: 1
+                }).addTo(leafletMap);
+
+                let t = 0;
+                function move() {
+                    t += 0.01;
+                    if (t > 1) t = 0;
+                    const lat = from.lat + (to.lat - from.lat) * t;
+                    const lon = from.lon + (to.lon - from.lon) * t;
+                    particle.setLatLng([lat, lon]);
+                    requestAnimationFrame(move);
+                }
+                move();
+            }
+
+            torCircuits.forEach(c => animateCurve(c.from, c.to));
+
+            /* C — Hover Connection Web for Nearby Nodes */
+            clusterGroup.eachLayer(marker => {
+                marker.on("mouseover", () => {
+                    clusterGroup.eachLayer(other => {
+                        if (other !== marker) {
+                            const latlng1 = marker.getLatLng();
+                            const latlng2 = other.getLatLng();
+
+                            const dist = leafletMap.distance(latlng1, latlng2);
+                            if (dist < 800000) {
+                                const line = L.polyline([latlng1, latlng2], {
+                                    color: "rgba(76,158,240,0.3)",
+                                    weight: 1
+                                }).addTo(leafletMap);
+
+                                setTimeout(() => leafletMap.removeLayer(line), 800);
+                            }
+                        }
+                    });
+                });
+            });
+
+            /* ============================================================
+               MAP V3 — Features 2, 3, 4
+               (Live Traffic Streaming • Hover Info Cards • Multi‑Circuit Overlay)
+               ============================================================ */
+
+            /* --- 2. REAL‑TIME TRAFFIC STREAMING LINES --- */
+            const liveTrafficParticles = [];
+
+            function addTrafficStream(a, b, color) {
+                liveTrafficParticles.push({
+                    from: a,
+                    to: b,
+                    t: Math.random(),
+                    speed: 0.004 + Math.random() * 0.004,
+                    color
+                });
+            }
+
+            staticNodes.forEach((n, i) => {
+                if (i < staticNodes.length - 1) {
+                    addTrafficStream(staticNodes[i], staticNodes[i + 1], "#00d4ff");
+                }
+            });
+
+            /* animate particles */
+            setInterval(() => {
+                liveTrafficParticles.forEach(p => {
+                    p.t += p.speed;
+                    if (p.t > 1) p.t = 0;
+
+                    const lat = p.from.lat + (p.to.lat - p.from.lat) * p.t;
+                    const lon = p.from.lon + (p.to.lon - p.from.lon) * p.t;
+
+                    if (!p.marker) {
+                        p.marker = L.circleMarker([lat, lon], {
+                            radius: 3,
+                            color: p.color,
+                            fillColor: p.color,
+                            fillOpacity: 1
+                        }).addTo(leafletMap);
+                    } else {
+                        p.marker.setLatLng([lat, lon]);
+                    }
+                });
+            }, 30);
+
+            /* --- 3. HOVER INFO CARDS FOR NODES --- */
+            const hoverCard = L.popup({
+                closeButton: false,
+                autoClose: true,
+                className: "node-hover-card"
+            });
+
+            clusterGroup.eachLayer(marker => {
+                marker.on("mouseover", e => {
+                    const ll = e.latlng;
+                    hoverCard
+                        .setLatLng(ll)
+                        .setContent(`
+                            <div style="
+                                font-size:12px;
+                                padding:6px;
+                                background:rgba(0,0,0,0.75);
+                                border:1px solid rgba(76, 201, 240, 0.4);
+                                color:#e8f3ff;
+                                border-radius:4px;
+                            ">
+                                <strong>Relay Node</strong><br>
+                                Lat: ${ll.lat.toFixed(3)}<br>
+                                Lon: ${ll.lng.toFixed(3)}
+                            </div>
+                        `)
+                        .openOn(leafletMap);
+                });
+
+                marker.on("mouseout", () => {
+                    leafletMap.closePopup(hoverCard);
+                });
+            });
+
+            /* --- 4. MULTI‑CIRCUIT OVERLAY (3 extra circuits) --- */
+            const extraCircuits = [
+                {
+                    from: staticNodes[4],
+                    middle: staticNodes[2],
+                    to: staticNodes[0],
+                    color: "#ffaa00"
+                },
+                {
+                    from: staticNodes[1],
+                    middle: staticNodes[3],
+                    to: staticNodes[4],
+                    color: "#ff0080"
+                },
+                {
+                    from: staticNodes[3],
+                    middle: staticNodes[0],
+                    to: staticNodes[2],
+                    color: "#00ff88"
+                }
+            ];
+
+            extraCircuits.forEach(path => {
+                const cLat = (path.from.lat + path.to.lat) / 2 + 10;
+                const cLon = (path.from.lon + path.to.lon) / 2;
+
+                const curve = L.curve(
+                    [
+                        "M", [path.from.lat, path.from.lon],
+                        "Q", [cLat, cLon],
+                        [path.to.lat, path.to.lon]
+                    ],
+                    {
+                        color: path.color,
+                        weight: 2,
+                        opacity: 0.7,
+                        dashArray: "4,6"
+                    }
+                );
+                curve.addTo(leafletMap);
+
+                /* moving particle on each multi‑circuit */
+                let t = 0;
+                const particle = L.circleMarker([path.from.lat, path.from.lon], {
+                    radius: 4,
+                    color: path.color,
+                    fillColor: path.color,
+                    fillOpacity: 1
+                }).addTo(leafletMap);
+
+                function animateExtra() {
+                    t += 0.007;
+                    if (t > 1) t = 0;
+                    const lat = path.from.lat + (path.to.lat - path.from.lat) * t;
+                    const lon = path.from.lon + (path.to.lon - path.from.lon) * t;
+                    particle.setLatLng([lat, lon]);
+                    requestAnimationFrame(animateExtra);
+                }
+                animateExtra();
+            });
+
+            window.addEventListener("resize", () =>
+                setTimeout(() => leafletMap.invalidateSize(), 200)
+            );
+        }
+
+        // ===== 3D HOLOGRAM ONION (WIREFRAME SPHERE) =====
+        const onionCanvas = document.getElementById('onionCanvas');
+        const octx = onionCanvas.getContext('2d');
+        onionCanvas.width = 500;
+        onionCanvas.height = 500;
+
+        let holoAngle = 0;
+        let loadingProgress = 0;
+        let holoActive = true;
+
+        // Boot sequence steps and UI references (Part 3)
+        const bootSteps = [
+            "Initializing onion layers…",
+            "Loading TOR relay map…",
+            "Syncing TOR consensus document…",
+            "Booting AI correlation engine…",
+            "Enabling Traffic DNA analyzer…",
+            "Starting threat & anomaly monitor…",
+            "Finalizing forensic dashboard…"
+        ];
+
+        const bootTimelineEl = document.getElementById('bootTimeline');
+        if (bootTimelineEl) {
+            bootSteps.forEach((step, idx) => {
+                const div = document.createElement('div');
+                div.className = 'boot-step';
+                div.dataset.index = idx;
+                div.textContent = `[ ] ${step}`;
+                bootTimelineEl.appendChild(div);
+            });
+        }
+
+        const loadingStatusEl = document.getElementById('loadingStatus');
+        const loadingBarFill = document.getElementById('loadingBarFill');
+        const loadingPercentEl = document.getElementById('loadingPercent');
+        let scanPos = -140;
+
+        function drawHologramOnion() {
+            if (!holoActive) return;
+
+            octx.clearRect(0, 0, onionCanvas.width, onionCanvas.height);
+
+            const cx = onionCanvas.width / 2;
+            const cy = onionCanvas.height / 2;
+            const radius = 140;
+
+            // Floating code fragments behind the onion (Part 4)
+            const codeLines = [
+                "node=185.220.101.23 rtt=98ms",
+                "exit=178.175.131.194 status=OK",
+                "building 3-hop circuit…",
+                "fp=A41 entropy=0.87",
+                "consensus relays=7234",
+                "threat_index=7.8/10"
+            ];
+
+            octx.save();
+            octx.font = "12px Courier New";
+            octx.fillStyle = "rgba(0,255,136,0.25)";
+            codeLines.forEach((line, idx) => {
+                const y = cy - radius - 40 + ((idx * 22 + holoAngle * 80) % (radius * 2 + 80));
+                const x = cx - radius - 80 + Math.sin(holoAngle + idx) * 40;
+                octx.fillText(line, x, y);
+            });
+            octx.restore();
+
+            /* === ADVANCED REAL ONION HALF‑CUT SLICES (Organic + Tear Fracture + Glow) === */
+            const layerCount = 14; // increased layers
+            for (let i = 0; i < layerCount; i++) {
+
+                // baseline radius shrink
+                const baseR = radius - i * 10;
+
+                // irregular wobble boosted
+                const wobble = 10 + i * 1.4;
+
+                // tear fractures inside rings (jagged angular points)
+                const fractureStrength = 4 + i * 0.6;
+
+                // hologram color shift per layer
+                const hueShift = 180 + i * 6;
+                const alpha = 0.18 + (i * 0.03);
+
+                octx.beginPath();
+
+                for (let a = 0; a <= Math.PI * 2; a += 0.06) {
+                    const organic =
+                        Math.sin(a * 3 + holoAngle * (1.2 + i * 0.2)) * wobble +
+                        Math.sin(a * 7 + holoAngle * (1.5 + i * 0.15)) * wobble * 0.4;
+
+                    const fractures =
+                        Math.sin(a * 14 + holoAngle * (2 + i * 0.1)) * fractureStrength;
+
+                    const rr = baseR + organic + fractures;
+
+                    const xx = cx + Math.cos(a) * rr;
+                    const yy = cy + Math.sin(a) * rr * 0.78;
+
+                    if (a === 0) octx.moveTo(xx, yy);
+                    else octx.lineTo(xx, yy);
+                }
+
+                octx.strokeStyle = `hsla(${hueShift}, 100%, 65%, ${alpha})`;
+                octx.lineWidth = 1.2;
+                octx.stroke();
+            }
+
+            /* === Liquid Shimmer Shader Overlay === */
+            octx.save();
+            octx.beginPath();
+            octx.ellipse(cx, cy, radius * 0.98, radius * 0.78, 0, 0, Math.PI * 2);
+            octx.clip();
+            const shimmerShift = Math.sin(holoAngle * 2.2) * radius * 0.4;
+            const shimmerGrad = octx.createLinearGradient(
+                cx - radius + shimmerShift,
+                cy - radius,
+                cx + radius + shimmerShift,
+                cy + radius
+            );
+            shimmerGrad.addColorStop(0.0, "rgba(255,255,255,0.0)");
+            shimmerGrad.addColorStop(0.45, "rgba(255,255,255,0.18)");
+            shimmerGrad.addColorStop(0.55, "rgba(255,255,255,0.05)");
+            shimmerGrad.addColorStop(1.0, "rgba(255,255,255,0.0)");
+            octx.globalCompositeOperation = "soft-light";
+            octx.fillStyle = shimmerGrad;
+            octx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+            octx.restore();
+            octx.globalCompositeOperation = "source-over";
+
+            /* === Procedural Onion Texture Noise (fibers) === */
+            octx.save();
+            octx.beginPath();
+            octx.ellipse(cx, cy, radius * 0.9, radius * 0.7, 0, 0, Math.PI * 2);
+            octx.clip();
+            for (let i = 0; i < 70; i++) {
+                const r = Math.random() * radius * 0.9;
+                const a = Math.random() * Math.PI * 2;
+                const len = 4 + Math.random() * 10;
+                const x1 = cx + Math.cos(a) * r;
+                const y1 = cy + Math.sin(a) * r * 0.8;
+                const x2 = cx + Math.cos(a) * (r + len);
+                const y2 = cy + Math.sin(a) * (r + len) * 0.8;
+                octx.beginPath();
+                octx.moveTo(x1, y1);
+                octx.lineTo(x2, y2);
+                octx.strokeStyle = "rgba(255,255,255,0.05)";
+                octx.lineWidth = 0.5;
+                octx.stroke();
+            }
+            octx.restore();
+
+            /* === Heat-Signature Style Bloom === */
+            octx.save();
+            octx.beginPath();
+            octx.ellipse(cx, cy, radius * 0.8, radius * 0.6, 0, 0, Math.PI * 2);
+            octx.clip();
+            const heatPulse = 0.3 + 0.2 * Math.sin(holoAngle * 3.1);
+            const heatGrad = octx.createRadialGradient(
+                cx,
+                cy,
+                0,
+                cx,
+                cy,
+                radius * 0.9
+            );
+            heatGrad.addColorStop(0.0, `rgba(255,255,200,${0.22 + heatPulse})`);
+            heatGrad.addColorStop(0.4, `rgba(255,140,0,${0.3 + heatPulse * 0.5})`);
+            heatGrad.addColorStop(0.9, "rgba(128,0,64,0)");
+            octx.globalCompositeOperation = "lighter";
+            octx.fillStyle = heatGrad;
+            octx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+            octx.restore();
+            octx.globalCompositeOperation = "source-over";
+
+            /* === 3D Extrusion Illusion (top highlight + bottom shadow) === */
+            const depthGrad = octx.createLinearGradient(
+                cx,
+                cy - radius * 0.9,
+                cx,
+                cy + radius * 1.1
+            );
+            depthGrad.addColorStop(0.0, "rgba(255,255,255,0.22)");
+            depthGrad.addColorStop(0.5, "rgba(0,0,0,0.0)");
+            depthGrad.addColorStop(1.0, "rgba(0,0,0,0.55)");
+            octx.beginPath();
+            octx.ellipse(cx, cy + 4, radius * 0.98, radius * 0.8, 0, 0, Math.PI * 2);
+            octx.strokeStyle = depthGrad;
+            octx.lineWidth = 10;
+            octx.stroke();
+
+            /* === Radial Glow Pulse upgraded === */
+            const glowPulse = 0.25 + Math.sin(holoAngle * 2.5) * 0.15;
+            octx.beginPath();
+            octx.arc(cx, cy, radius + 45, 0, Math.PI * 2);
+            octx.strokeStyle = `rgba(139,92,246,${glowPulse})`;
+            octx.lineWidth = 8;
+            octx.stroke();
+
+            // Neon scanline sweeping over the onion (Part 5)
+            scanPos += 2;
+            if (scanPos > radius) scanPos = -radius;
+
+            const scanY = cy + scanPos;
+            const scanGradient = octx.createLinearGradient(cx - radius - 20, scanY, cx + radius + 20, scanY);
+
+            scanGradient.addColorStop(0, "rgba(0,255,136,0)");
+            scanGradient.addColorStop(0.5, "rgba(0,255,200,0.9)");
+            scanGradient.addColorStop(1, "rgba(0,255,136,0)");
+
+            octx.beginPath();
+            octx.moveTo(cx - radius - 20, scanY);
+            octx.lineTo(cx + radius + 20, scanY);
+            octx.strokeStyle = scanGradient;
+            octx.lineWidth = 2;
+            octx.stroke();
+
+            /* === Glow Pulse Effect === */
+            const glowStrength = 0.15 + (Math.sin(holoAngle * 3) * 0.10);
+            octx.beginPath();
+            octx.arc(cx, cy, radius + 30, 0, Math.PI * 2);
+            octx.strokeStyle = `rgba(67,97,238,${glowStrength})`;
+            octx.lineWidth = 6;
+            octx.stroke();
+
+            // Central Pulse Dot
+            octx.beginPath();
+            octx.arc(cx, cy, 8 + Math.sin(holoAngle * 2) * 3, 0, Math.PI * 2);
+            octx.fillStyle = "rgba(0,255,136,0.9)";
+            octx.fill();
+
+            /* === Hologram Ripple Effect === */
+            const rippleRadius = (holoAngle * 60) % (radius + 40);
+            octx.beginPath();
+            octx.arc(cx, cy, rippleRadius, 0, Math.PI * 2);
+            octx.strokeStyle = `rgba(0,255,136,${1 - rippleRadius / (radius + 40)})`;
+            octx.lineWidth = 2;
+            octx.stroke();
+            /* === Inner Core Flash at 100% === */
+            if (loadingProgress >= 100) {
+                const flash = Math.abs(Math.sin(holoAngle * 10));
+                octx.beginPath();
+                octx.arc(cx, cy, 20 + flash * 15, 0, Math.PI * 2);
+                octx.fillStyle = `rgba(0,255,200,${0.6 + flash * 0.4})`;
+                octx.fill();
+            }
+
+            holoAngle += 0.02;
+
+            // Progress simulation + UI updates (Part 6)
+            if (loadingProgress < 100) {
+                loadingProgress += 0.4;
+                const pct = Math.min(100, Math.floor(loadingProgress));
+
+                if (loadingBarFill) {
+                    loadingBarFill.style.width = pct + '%';
+                }
+                if (loadingPercentEl) {
+                    loadingPercentEl.textContent = pct + '%';
+                }
+
+                if (loadingStatusEl) {
+                    const stepIndex = Math.min(
+                        bootSteps.length - 1,
+                        Math.floor((loadingProgress / 100) * bootSteps.length)
+                    );
+                    loadingStatusEl.textContent = bootSteps[stepIndex];
+
+                    if (bootTimelineEl) {
+                        const stepEls = bootTimelineEl.querySelectorAll('.boot-step');
+                        stepEls.forEach((el, idx) => {
+                            if (idx < stepIndex) {
+                                el.textContent = `[✓] ${bootSteps[idx]}`;
+                                el.classList.add('boot-step-complete');
+                                el.classList.remove('boot-step-active');
+                            } else if (idx === stepIndex) {
+                                el.textContent = `[…] ${bootSteps[idx]}`;
+                                el.classList.add('boot-step-active');
+                                el.classList.remove('boot-step-complete');
+                            } else {
+                                el.textContent = `[ ] ${bootSteps[idx]}`;
+                                el.classList.remove('boot-step-active', 'boot-step-complete');
+                            }
+                        });
+                    }
+                }
+            } else {
+                holoActive = false;
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('dashboard').classList.add('visible');
+                animateCounters();
+                return;
+            }
+
+            requestAnimationFrame(drawHologramOnion);
+        }
+
+        drawHologramOnion();
+
+        /* ===== TOR INTELLIGENCE LAYER (DEMO ENGINE) ===== */
+        const intelRoles = ["entry", "middle", "exit"];
+        const intelCountries = ["Germany", "USA", "France", "India", "UK", "Netherlands", "Canada", "Sweden"];
+        const intelStatuses = ["Online", "Stable", "Fast", "Slow", "Offline"];
+
+        let intelNodes = [];
+
+        function generateIntelNodes(count = 60) {
+            intelNodes = Array.from({ length: count }, () => ({
+                ip: `${20 + Math.floor(Math.random()*200)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${10 + Math.floor(Math.random()*200)}`,
+                country: intelCountries[Math.floor(Math.random()*intelCountries.length)],
+                role: intelRoles[Math.floor(Math.random()*intelRoles.length)],
+                uptime: (80 + Math.random()*20).toFixed(1) + "%",
+                bandwidth: (5 + Math.random()*90).toFixed(1) + " MB/s",
+                status: intelStatuses[Math.floor(Math.random()*intelStatuses.length)]
+            }));
+        }
+
+        function fillIntelStats() {
+            const total = intelNodes.length;
+            const entry = intelNodes.filter(n=>n.role==="entry").length;
+            const middle = intelNodes.filter(n=>n.role==="middle").length;
+            const exit = intelNodes.filter(n=>n.role==="exit").length;
+
+            document.getElementById("intelTotalNodes").textContent = total;
+            document.getElementById("intelEntryNodes").textContent = entry;
+            document.getElementById("intelMiddleNodes").textContent = middle;
+            document.getElementById("intelExitNodes").textContent = exit;
+            document.getElementById("intelAvgUptime").textContent =
+                (80 + Math.random()*15).toFixed(1) + "%";
+            document.getElementById("intelTotalBandwidth").textContent =
+                (total * (5 + Math.random()*80)).toFixed(1) + " MB/s";
+        }
+
+        function renderIntelTable(filter="all") {
+            const body = document.getElementById("intelTableBody");
+            body.innerHTML = "";
+            intelNodes
+                .filter(n => filter==="all" || n.role===filter)
+                .forEach(n => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td style="padding:0.6rem;">${n.ip}</td>
+                        <td style="padding:0.6rem;">${n.country}</td>
+                        <td style="padding:0.6rem; text-transform:capitalize; color:var(--secondary);">${n.role}</td>
+                        <td style="padding:0.6rem;">${n.uptime}</td>
+                        <td style="padding:0.6rem;">${n.bandwidth}</td>
+                        <td style="padding:0.6rem; color:var(--primary);">${n.status}</td>
+                    `;
+                    tr.style.transition="background 0.4s ease";
+                    tr.classList.add("intelFlash");
+                    body.appendChild(tr);
+                    setTimeout(()=>{ tr.classList.remove("intelFlash"); }, 400);
+                });
+        }
+
+        document.querySelectorAll(".intel-filter-btn").forEach(btn=>{
+            btn.addEventListener("click",()=>{
+                document.querySelectorAll(".intel-filter-btn").forEach(b=>b.classList.remove("active"));
+                btn.classList.add("active");
+                renderIntelTable(btn.dataset.role);
+            });
+        });
+
+        function updateIntelLayer() {
+            generateIntelNodes();
+            fillIntelStats();
+            const activeBtn = document.querySelector(".intel-filter-btn.active");
+            renderIntelTable(activeBtn ? activeBtn.dataset.role : "all");
+        }
+
+        setInterval(updateIntelLayer, 2000);
+        updateIntelLayer();
+
+        /* ==== ORIGIN DIAL — ULTRA VERSION (Particles + 3D + Hover) ==== */
+        const originDial = document.getElementById("originDialCanvas");
+        let originCtx = originDial.getContext("2d");
+        let originHoverIndex = -1;
+        let originParticles = [];
+
+        function addParticles(x, y, color) {
+            for (let i = 0; i < 18; i++) {
+                originParticles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 20 + Math.random() * 10,
+                    color
+                });
+            }
+        }
+
+        originDial.addEventListener("mousemove", (e) => {
+            const rect = originDial.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const cx = originDial.width / 2;
+            const cy = originDial.height / 2;
+
+            const angle = Math.atan2(y - cy, x - cx);
+            let a = angle < -Math.PI/2 ? angle + Math.PI*2 : angle;
+
+            let start = -Math.PI/2;
+            let hover = -1;
+
+            originDemoRegions.forEach((r, idx) => {
+                const slice = (r.val / 100) * Math.PI * 2;
+                if (a >= start && a < start + slice) hover = idx;
+                start += slice;
+            });
+
+            if (hover !== originHoverIndex) {
+                if (hover !== -1) {
+                    const ex = cx + Math.cos(angle) * 80;
+                    const ey = cy + Math.sin(angle) * 80;
+                    addParticles(ex, ey, originDemoRegions[hover].color);
+                }
+                originHoverIndex = hover;
+            }
+        });
+
+        function drawOriginDial(regions) {
+            const w = originDial.width;
+            const h = originDial.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const radius = 110;
+
+            originCtx.clearRect(0, 0, w, h);
+
+            let start = -Math.PI / 2;
+            let total = regions.reduce((s, r) => s + r.val, 0);
+            const pulse = 0.2 + Math.sin(Date.now() * 0.002) * 0.12;
+
+            regions.forEach((r, idx) => {
+                const slice = (r.val / total) * Math.PI * 2;
+                const expanded = idx === originHoverIndex ? 12 : 0;
+
+                // 3D shadow
+                originCtx.beginPath();
+                originCtx.moveTo(cx, cy);
+                originCtx.arc(cx, cy, radius + expanded + 8, start, start + slice);
+                originCtx.closePath();
+                originCtx.fillStyle = "rgba(0,0,0,0.25)";
+                originCtx.fill();
+
+                // Main slice
+                originCtx.beginPath();
+                originCtx.moveTo(cx, cy);
+                originCtx.arc(cx, cy, radius + expanded, start, start + slice);
+                originCtx.closePath();
+
+                const grad = originCtx.createRadialGradient(cx, cy, 0, cx, cy, radius + expanded);
+                grad.addColorStop(0, r.color + "33");
+                grad.addColorStop(1, r.color);
+
+                originCtx.fillStyle = grad;
+                originCtx.shadowColor = r.color;
+                originCtx.shadowBlur = 18 + pulse * 22;
+                originCtx.fill();
+                originCtx.shadowBlur = 0;
+
+                start += slice;
+            });
+
+            // draw particles
+            originParticles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                originCtx.beginPath();
+                originCtx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+                originCtx.fillStyle = p.color;
+                originCtx.fill();
+
+                if (p.life <= 0) originParticles.splice(i, 1);
+            });
+
+            // center UI text
+            originCtx.fillStyle = "var(--primary)";
+            originCtx.font = "bold 20px Courier New";
+            originCtx.textAlign = "center";
+            originCtx.fillText("ORIGIN", cx, cy - 5);
+            originCtx.font = "12px Courier New";
+            originCtx.fillText("PROBABILITY", cx, cy + 15);
+
+            requestAnimationFrame(() => drawOriginDial(regions));
+        }
+
+        // Demo data for the dial (forensic-style regional split)
+        const originDemoRegions = [
+            { label: 'South Asia', val: 45, color: '#00ff88' },
+            { label: 'Europe', val: 29, color: '#00d4ff' },
+            { label: 'Middle East', val: 18, color: '#ffaa00' },
+            { label: 'Others', val: 8, color: '#ff0080' }
+        ];
+
+        // Initial render once DOM + canvas are ready
+        requestAnimationFrame(() => drawOriginDial(originDemoRegions));
+
+        /* ==== USER PERSONA INTELLIGENCE ENGINE ==== */
+        const personaProfiles = [
+            {
+                actor:"A41-shadowwolf",
+                first:"7 Nov 2025",
+                last:"21 Nov 2025",
+                window:"11:30 PM – 1:10 AM",
+                node:"Prefers Netherlands exit nodes",
+                freq:"High (23 sessions in 2 weeks)",
+                fingerprint:"96% device match across sessions",
+                intent:"HIGH-RISK — Darknet Marketplace & Forum Logins",
+                reason:"Repeated access to marketplace endpoints, consistent late-night usage, stable node preference."
+            },
+            {
+                actor:"A93-nightbird",
+                first:"3 Oct 2025",
+                last:"19 Nov 2025",
+                window:"8:00 PM – 10:00 PM",
+                node:"Prefers Sweden exit nodes",
+                freq:"Medium (12 sessions in 3 weeks)",
+                fingerprint:"71% similarity (possible secondary device)",
+                intent:"MEDIUM-RISK — Cryptocurrency Mixing",
+                reason:"Frequent tumbler access pattern, medium-risk flow bursts detected."
+            },
+            {
+                actor:"Z17-echofox",
+                first:"29 Sep 2025",
+                last:"20 Nov 2025",
+                window:"2:00 AM – 3:00 AM",
+                node:"Rotates between Germany & France exits",
+                freq:"Low (5 sessions in 2 months)",
+                fingerprint:"84% match",
+                intent:"LOW-RISK — Anonymous Browsing",
+                reason:"Mostly static content, minimal bursts, long idle times."
+            }
+        ];
+
+        function updatePersonaIntel() {
+            const p = personaProfiles[Math.floor(Math.random()*personaProfiles.length)];
+
+            document.getElementById("personaActorID").textContent = p.actor;
+            document.getElementById("personaFirstSeen").textContent = p.first;
+            document.getElementById("personaLastSeen").textContent = p.last;
+            document.getElementById("personaWindow").textContent = p.window;
+            document.getElementById("personaNodePref").textContent = p.node;
+            document.getElementById("personaFrequency").textContent = p.freq;
+            document.getElementById("personaFingerprint").textContent = p.fingerprint;
+            document.getElementById("personaIntent").textContent = p.intent;
+            document.getElementById("personaIntentReason").textContent = p.reason;
+        }
+
+        // refresh persona intel every 7 seconds
+        setInterval(updatePersonaIntel, 7000);
+        updatePersonaIntel();
+
+        // ===== TOR MAP CANVAS (STATIC IMMOVABLE VERSION) =====
+        const torMapCanvas = document.getElementById('torMapCanvas');
+        const torMapCtx = torMapCanvas.getContext('2d');
+
+        function resizeTorMap() {
+            const container = torMapCanvas.parentElement;
+            torMapCanvas.width = container.clientWidth;
+            torMapCanvas.height = container.clientHeight;
+        }
+        resizeTorMap();
+        window.addEventListener('resize', resizeTorMap);
+
+        // Create fixed static nodes (no physics, no movement)
+        const staticTorNodes = [
+            { x: 120, y: 80, type: "entry" },
+            { x: 300, y: 140, type: "middle" },
+            { x: 520, y: 220, type: "middle" },
+            { x: 760, y: 160, type: "exit" },
+            { x: 900, y: 300, type: "entry" },
+            { x: 200, y: 300, type: "exit" }
+        ];
+
+        // Predefined static connections
+        const staticConnections = [
+            [0,1],
+            [1,2],
+            [2,3],
+            [0,4],
+            [4,5]
+        ];
+
+        let currentFilter = "all";
+
+        // Colors
+        const nodeColors = {
+            entry: "rgba(0,255,136,0.9)",
+            middle: "rgba(99,102,241,0.9)",
+            exit: "rgba(255,0,128,0.9)"
+        };
+
+        // Draw static map
+        function drawStaticTorMap() {
+            torMapCtx.clearRect(0,0,torMapCanvas.width,torMapCanvas.height);
+
+            // Background grid
+            torMapCtx.strokeStyle = "rgba(255,255,255,0.03)";
+            for (let x = 0; x < torMapCanvas.width; x += 40) {
+                torMapCtx.beginPath();
+                torMapCtx.moveTo(x,0);
+                torMapCtx.lineTo(x,torMapCanvas.height);
+                torMapCtx.stroke();
+            }
+            for (let y = 0; y < torMapCanvas.height; y += 40) {
+                torMapCtx.beginPath();
+                torMapCtx.moveTo(0,y);
+                torMapCtx.lineTo(torMapCanvas.width,y);
+                torMapCtx.stroke();
+            }
+
+            // Draw connections
+            staticConnections.forEach(([a,b]) => {
+                const n1 = staticTorNodes[a];
+                const n2 = staticTorNodes[b];
+                if (currentFilter !== "all" && (n1.type !== currentFilter || n2.type !== currentFilter)) return;
+
+                torMapCtx.beginPath();
+                torMapCtx.moveTo(n1.x, n1.y);
+                torMapCtx.lineTo(n2.x, n2.y);
+                torMapCtx.strokeStyle = "rgba(255,255,255,0.4)";
+                torMapCtx.lineWidth = 2;
+                torMapCtx.stroke();
+            });
+
+            // Draw nodes
+            staticTorNodes.forEach(node => {
+                if (currentFilter !== "all" && node.type !== currentFilter) return;
+
+                torMapCtx.beginPath();
+                torMapCtx.arc(node.x, node.y, 10, 0, Math.PI*2);
+                torMapCtx.fillStyle = nodeColors[node.type];
+                torMapCtx.shadowColor = nodeColors[node.type];
+                torMapCtx.shadowBlur = 12;
+                torMapCtx.fill();
+                torMapCtx.shadowBlur = 0;
+
+                torMapCtx.beginPath();
+                torMapCtx.arc(node.x, node.y, 14, 0, Math.PI * 2);
+                torMapCtx.strokeStyle = nodeColors[node.type];
+                torMapCtx.lineWidth = 1;
+                torMapCtx.stroke();
+            });
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.map-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                drawStaticTorMap();
+            });
+        });
+
+        // Disable simulate circuit (since static)
+        document.getElementById("simulateCircuitBtn").onclick = () => {
+            alert("Circuit Simulation disabled in static mode.");
+        };
+
+        // Initial render
+        drawStaticTorMap();
+
+        // ===== TOR THREAT HEATMAP =====
+        const indiaStates = [
+            { name: "Maharashtra", x: 0.42, y: 0.63 },
+            { name: "Karnataka", x: 0.40, y: 0.72 },
+            { name: "Tamil Nadu", x: 0.48, y: 0.80 },
+            { name: "Delhi NCR", x: 0.46, y: 0.37 },
+            { name: "West Bengal", x: 0.70, y: 0.55 },
+            { name: "Kerala", x: 0.38, y: 0.86 }
+        ];
+        const heatmapCanvas = document.getElementById('heatmapCanvas');
+        const heatCtx = heatmapCanvas.getContext('2d');
+
+        function resizeHeatmap() {
+            const container = heatmapCanvas.parentElement;
+            heatmapCanvas.width = container.clientWidth;
+            heatmapCanvas.height = container.clientHeight;
+        }
+        resizeHeatmap();
+        window.addEventListener('resize', resizeHeatmap);
+
+        // Simulated threat data
+        const threatNodes = Array.from({ length: 40 }, () => ({
+            x: (0.15 + Math.random() * 0.70) * heatmapCanvas.width, // India's long range
+            y: (0.20 + Math.random() * 0.60) * heatmapCanvas.height, // India's lat range
+            level: Math.random(), // 0 = low, 1 = critical
+        }));
+
+        const heatmapTooltip = document.getElementById('heatmapTooltip');
+        heatmapCanvas.addEventListener('mousemove', handleHeatmapHover);
+        heatmapCanvas.addEventListener('mouseleave', () => { heatmapTooltip.style.display = 'none'; });
+
+        function getThreatColor(level) {
+            if (level < 0.25) return 'LOW';
+            if (level < 0.5) return 'MEDIUM';
+            if (level < 0.75) return 'HIGH';
+            return 'CRITICAL';
+        }
+
+        let heatPulse = 0;
+
+        function drawHeatmap() {
+            let hoveredNode = null;
+            heatCtx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
+            document.getElementById('indiaMapSVG').style.opacity = 0.22;
+            heatPulse += 0.05;
+
+            threatNodes.forEach(node => {
+                const intensity = node.level;
+                const pulse = (Math.sin(heatPulse + intensity * 5) + 1) * 0.5;
+
+                const radius = 10 + intensity * 30 + pulse * 10;
+
+                const color = `
+                    rgba(
+                        ${Math.floor(255 * intensity)},
+                        ${Math.floor(255 * (1 - intensity))},
+                        80,
+                        ${0.25 + pulse * 0.2}
+                    )
+                `;
+
+                heatCtx.beginPath();
+                heatCtx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+                heatCtx.fillStyle = color;
+                heatCtx.fill();
+                if (mousePos && Math.hypot(mousePos.x - node.x, mousePos.y - node.y) < radius) {
+                    hoveredNode = node;
+                }
+            });
+
+            // Draw glowing state centers
+            indiaStates.forEach(s => {
+                const px = s.x * heatmapCanvas.width;
+                const py = s.y * heatmapCanvas.height;
+
+                const pulse = (Math.sin(heatPulse * 1.5) + 1) * 0.5;
+                const radius = 12 + pulse * 8;
+
+                heatCtx.beginPath();
+                heatCtx.arc(px, py, radius, 0, Math.PI * 2);
+                heatCtx.fillStyle = "rgba(0,255,136," + (0.25 + pulse * 0.3) + ")";
+                heatCtx.fill();
+
+                heatCtx.font = "12px Courier New";
+                heatCtx.fillStyle = "rgba(255,255,255,0.8)";
+                heatCtx.fillText(s.name, px + 10, py - 10);
+            });
+
+            if (hoveredNode) {
+                heatmapTooltip.style.display = 'block';
+                heatmapTooltip.style.left = mousePos.x + 'px';
+                heatmapTooltip.style.top = mousePos.y + 'px';
+                heatmapTooltip.innerHTML = `
+                    <strong>Threat Level:</strong> ${getThreatColor(hoveredNode.level)}<br>
+                    <strong>Intensity:</strong> ${(hoveredNode.level * 100).toFixed(1)}%<br>
+                    <strong>X:</strong> ${Math.round(hoveredNode.x)} | 
+                    <strong>Y:</strong> ${Math.round(hoveredNode.y)}
+                `;
+            } else {
+                heatmapTooltip.style.display = 'none';
+            }
+
+            requestAnimationFrame(drawHeatmap);
+        }
+
+        let mousePos = null;
+
+        function handleHeatmapHover(e) {
+            const rect = heatmapCanvas.getBoundingClientRect();
+            mousePos = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        drawHeatmap();
+
+        // Map filter buttons
+        document.querySelectorAll('.map-filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+            });
+        });
+
+        // ===== UTILITY FUNCTIONS =====
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function animateCounters() {
+            const counters = [
+                { id: 'totalNodes', target: 7234 },
+                { id: 'entryNodes', target: 2145 },
+                { id: 'exitNodes', target: 1089 },
+                { id: 'middleNodes', target: 4000 }
+            ];
+
+            counters.forEach(counter => {
+                let current = 0;
+                const increment = counter.target / 100;
+                const element = document.getElementById(counter.id);
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= counter.target) {
+                        element.textContent = counter.target.toLocaleString();
+                        clearInterval(timer);
+                    } else {
+                        element.textContent = Math.floor(current).toLocaleString();
+                    }
+                }, 20);
+            });
+        }
+
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                const uploadZone = document.querySelector('.upload-zone');
+                uploadZone.style.borderColor = 'var(--primary)';
+                uploadZone.innerHTML = `
+                    <div class="upload-icon" style="color: var(--primary);">✓</div>
+                    <div class="upload-text" style="color: var(--primary);">${files.length} file(s) uploaded successfully</div>
+                    <div class="supported-formats">Analyzing TOR traffic patterns (demo)...</div>
+                `;
+                
+                setTimeout(() => {
+                    runDemoAnalysis(files[0].name);
+                }, 1500);
+            }
+        });
+
+        // Drag and drop
+        const uploadZone = document.querySelector('.upload-zone');
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = 'var(--primary)';
+            uploadZone.style.background = 'var(--glass)';
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = 'var(--border)';
+            uploadZone.style.background = 'transparent';
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadZone.style.borderColor = 'var(--primary)';
+                uploadZone.innerHTML = `
+                    <div class="upload-icon" style="color: var(--primary);">✓</div>
+                    <div class="upload-text" style="color: var(--primary);">${files.length} file(s) uploaded</div>
+                    <div class="supported-formats">Analyzing TOR traffic patterns (demo)...</div>
+                `;
+                setTimeout(() => {
+                    runDemoAnalysis(files[0].name);
+                }, 1500);
+            }
+        });
+
+        // Generate report function
+        function generateReport() {
+            const reportContent = document.querySelector('.report-preview').textContent;
+            const blob = new Blob([reportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ONIONCOP_Forensic_Report_' + Date.now() + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('Report downloaded.\nThis is a demo text export. In production, this would be a signed PDF/JSON evidence file.');
+        }
+
+        // Add interactive hover effects to path nodes
+        document.querySelectorAll('.path-node').forEach((node, index) => {
+            node.addEventListener('click', () => {
+                const nodeInfo = [
+                    'Origin: Unknown\nEstimated Location: South Asia\nTimezone: UTC+5:30',
+                    'Entry Node: 185.220.101.23\nCountry: Germany\nUptime: 99.2%\nBandwidth: 10 GB/s',
+                    'Middle Node: 45.142.214.123\nCountry: France\nUptime: 98.5%\nBandwidth: 8 GB/s',
+                    'Exit Node: 178.175.131.194\nCountry: Russia\nUptime: 97.8%\nBandwidth: 12 GB/s',
+                    'Target: Hidden Service\n.onion address detected\nDarknet marketplace suspected'
+                ];
+                alert(nodeInfo[index]);
+            });
+        });
+
+        // Simulate real-time updates
+        setInterval(() => {
+            const totalNodes = document.getElementById('totalNodes');
+            const current = parseInt(totalNodes.textContent.replace(',', ''));
+            const change = Math.floor(Math.random() * 10) - 5;
+            totalNodes.textContent = (current + change).toLocaleString();
+        }, 5000);
+
+        /* ============================
+           DEMO ANALYSIS ENGINE (CLEAN)
+           ============================ */
+
+        // ==== TOR Fingerprinting Score (New Metric) ====
+        function updateFingerprintScore() {
+            const score = Math.floor(40 + Math.random() * 55); 
+            document.getElementById("fpScoreValue").textContent = score + "/100";
+
+            document.getElementById("fpBurst").style.width = (50 + Math.random() * 40) + "%";
+            document.getElementById("fpJitter").style.width = (40 + Math.random() * 50) + "%";
+            document.getElementById("fpFlow").style.width = (30 + Math.random() * 60) + "%";
+            document.getElementById("fpExit").style.width = (20 + Math.random() * 70) + "%";
+        }
+
+        // auto-update every 4s
+        setInterval(updateFingerprintScore, 4000);
+        updateFingerprintScore();
+
+        function runDemoAnalysis(fileName) {
+            const regions = ['South Asia', 'Western Europe', 'Eastern Europe', 'North America', 'Middle East'];
+            const tzList = ['UTC+5:30', 'UTC+1', 'UTC+2', 'UTC-5'];
+            const region = regions[Math.floor(Math.random() * regions.length)];
+            const tz = tzList[Math.floor(Math.random() * tzList.length)];
+            const conf = 70 + Math.floor(Math.random() * 25);
+            const patternId = 'A' + (10 + Math.floor(Math.random() * 89));
+
+            // Update Traffic DNA
+            if (trafficDNAValue && trafficDNADetails) {
+                trafficDNAValue.textContent = `Pattern #${patternId} Detected`;
+                trafficDNADetails.textContent =
+                    `Matches ${1 + Math.floor(Math.random() * 5)} previous TOR sessions. Probable recurring actor.`;
+            }
+
+            // Update Geo-Temporal
+            if (geoOriginValue && geoOriginDetails) {
+                geoOriginValue.textContent = `${tz} Origin`;
+                geoOriginDetails.innerHTML = `Predicted Region: ${region}<br>Confidence: ${conf}%`;
+            }
+
+            // Update Threat Level
+            if (threatLevelValue) {
+                const levels = ['MEDIUM RISK', 'HIGH RISK', 'CRITICAL'];
+                threatLevelValue.textContent = levels[Math.floor(Math.random() * levels.length)];
+            }
+
+            // Update Entry Node
+            if (entryNodeValue && entryNodeDetails) {
+                const ip = `${20 + Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${20 + Math.floor(Math.random() * 200)}`;
+                entryNodeValue.textContent = ip;
+                entryNodeDetails.innerHTML = `Guard Node: Demo Node<br>Uptime: ${(90 + Math.random() * 9).toFixed(1)}%`;
+            }
+
+            // Update Confidence Bar
+            const reconBar = document.querySelector('#reconstruction .confidence-fill');
+            const reconText = document.querySelector('#reconstruction').querySelector('div[style*="text-align"]');
+            if (reconBar) reconBar.style.width = conf + '%';
+            if (reconText) reconText.textContent = `${conf}% Confidence (demo)`;
+
+            // Update Anomalies
+            const anomalyList = document.getElementById('anomalyList');
+            if (anomalyList) {
+                anomalyList.innerHTML = `
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>Correlated Malicious Exit Path</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">
+                                Session from file: ${fileName}
+                            </div>
+                        </div>
+                        <span class="severity-badge">HIGH</span>
+                    </div>
+
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>Repeated Traffic DNA Pattern #${patternId}</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">
+                                Matches darknet communication fingerprint.
+                            </div>
+                        </div>
+                        <span class="severity-badge">CRITICAL</span>
+                    </div>
+
+                    <div class="anomaly-item">
+                        <div>
+                            <strong>New Guard Node Suspected</strong>
+                            <div style="opacity: 0.7; font-size: 0.85rem; margin-top: 0.3rem;">
+                                Auto-flagged from uploaded logs.
+                            </div>
+                        </div>
+                        <span class="severity-badge">MEDIUM</span>
+                    </div>
+                `;
+            }
+
+            // Simulate TOR topology movement
+            torNodes.forEach(node => {
+                node.x = Math.min(Math.max(node.x + (Math.random() - 0.5) * 30, 0), torMapCanvas.width);
+                node.y = Math.min(Math.max(node.y + (Math.random() - 0.5) * 30, 0), torMapCanvas.height);
+
+                if (Math.random() < 0.2) {
+                    node.type = ['entry', 'middle', 'exit'][Math.floor(Math.random() * 3)];
+                }
+            });
+
+            alert('Demo Analysis Complete:\nTOR paths reconstructed.\nAI Insights updated.\nAnomalies refreshed.');
+        }
+
+        // Live topology drift (light)
+        setInterval(() => {
+            torNodes.forEach(node => {
+                node.x = Math.min(Math.max(node.x + (Math.random() - 0.5) * 10, 0), torMapCanvas.width);
+                node.y = Math.min(Math.max(node.y + (Math.random() - 0.5) * 10, 0), torMapCanvas.height);
+            });
+        }, 8000);
+
+        console.log('%c🧅 ONIONCOP™ Intelligence Platform', 'color: #00ff88; font-size: 20px; font-weight: bold;');
+        console.log('%cTOR Network Analysis System Active', 'color: #00d4ff; font-size: 14px;');
+        console.log('%c⚠️ For authorized investigative use only', 'color: #ff0080; font-size: 12px;');
+    </script>
+</body>
+</html>
