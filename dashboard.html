@@ -788,6 +788,10 @@
                 border-radius: 0.7rem;
                 box-shadow: 0 0 25px rgba(76,158,240,0.25);
             }
+            .section::after {
+                animation: none;
+                box-shadow: 0 0 18px rgba(76,158,240,0.35);
+            }
 
             .section-title {
                 font-size: 1.1rem;
@@ -933,8 +937,13 @@
     }
 </style>
 <script>
-
 (function(){
+    // Disable heavy cursor trail on mobile / touch devices
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+        return; // no trail dots created on mobile
+    }
+
     const trailCount = 10;
     const trails = [];
 
@@ -956,8 +965,8 @@
     });
 
     function animateTrail(){
-        let x = cursorX;
-        let y = cursorY;
+        const x = cursorX;
+        const y = cursorY;
 
         trails.forEach((dot, idx) => {
             setTimeout(() => {
@@ -1759,9 +1768,11 @@ Cross-reference with known threat actors.
         grid.className = "ultra-grid";
         document.body.appendChild(grid);
 
-        // Generate floating particles
+        // Generate floating particles (lighter on mobile)
         const particleLayer = document.getElementById("ultraParticles");
-        for(let i=0; i<80; i++){
+        const isMobileUltra = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const particleCount = isMobileUltra ? 18 : 80;
+        for(let i=0; i<particleCount; i++){
             const p = document.createElement("div");
             p.className = "ultra-dot";
             p.style.left = Math.random()*100 + "%";
@@ -1809,6 +1820,9 @@ Cross-reference with known threat actors.
         /* ==== CYBER MATRIX RAIN BACKGROUND (Loading Screen) ==== */
         const matrixCanvas = document.getElementById("matrixCanvas");
         const mtx = matrixCanvas.getContext("2d");
+        const isMobileMatrix = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let matrixFrame = 0;
+        const matrixFrameSkip = isMobileMatrix ? 3 : 1; // draw every 3rd frame on mobile
 
         function resizeMatrix() {
             matrixCanvas.width = window.innerWidth;
@@ -1830,6 +1844,13 @@ Cross-reference with known threat actors.
         initMatrix();
 
         function drawMatrix() {
+            matrixFrame++;
+            if (matrixFrame % matrixFrameSkip !== 0) {
+                // Still schedule next frame but skip heavy drawing work on mobile
+                requestAnimationFrame(drawMatrix);
+                return;
+            }
+
             mtx.fillStyle = "rgba(0,0,0,0.08)";
             mtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
